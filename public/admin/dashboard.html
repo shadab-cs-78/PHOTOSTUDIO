@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard — The Katni Creation</title>
+  <link rel="icon" type="image/svg+xml" href="/assets/logo.svg">
+  <link rel="stylesheet" href="/css/style.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header class="site-header">
+    <div class="nav-container">
+      <div class="brand-wrapper">
+        <a href="/" style="display: flex; align-items: center; gap: 10px;">
+          <img src="/assets/logo.svg" alt="The Katni Creation" style="height: 38px; width: auto;">
+        </a>
+      </div>
+      <ul class="nav-links">
+        <li><a href="/admin/dashboard.html" class="nav-link active">Albums</a></li>
+        <li><a href="/admin/album-new.html" class="nav-link">+ New Album</a></li>
+        <li><a href="/" class="nav-link" target="_blank">Public Index ↗</a></li>
+      </ul>
+      <div class="nav-actions">
+        <a href="/admin/album-new.html" class="btn-primary" style="padding: 8px 16px;">
+          + Create Album
+        </a>
+        <button onclick="AuthManager.logoutAdmin()" class="user-avatar-btn" title="Sign Out">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container" style="padding-top: 2.5rem; padding-bottom: 4rem;">
+    <!-- Top Summary -->
+    <div style="display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+      <div>
+        <div class="index-meta-label">THE KATNI CREATION &bull; TILAK COLLEGE CAMPUS, KATNI M.P.</div>
+        <h1 class="hero-main-title" style="font-size: 2.2rem; margin-bottom: 0;">Studio Archival & Surveillance Desk</h1>
+        <p style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 4px;">
+          Helpline: +91 6264220191, +91 7723091189 • Instagram: @the_katnicreation
+        </p>
+      </div>
+      <div>
+        <span class="chip-tag" style="background: var(--accent-gold-light); color: #5C4325; font-size: 0.75rem; padding: 6px 12px;">
+          ● ZERO-COST INFRASTRUCTURE ACTIVE
+        </span>
+      </div>
+    </div>
+
+    <!-- STORAGE ALLOCATION CARDS (4 PROVIDERS) -->
+    <section class="storage-quota-row">
+      <!-- 1. Cloudflare R2 -->
+      <div class="storage-provider-card">
+        <div class="storage-provider-header">
+          <span class="provider-name">1. Cloudflare R2</span>
+          <span style="font-size: 0.65rem; color: var(--accent-emerald); font-weight: 700;">PRIMARY</span>
+        </div>
+        <div style="font-size: 1.15rem; font-family: var(--font-serif); font-weight: 600;">2.8 GB / 10 GB</div>
+        <div class="storage-bar-bg">
+          <div class="storage-bar-fill" style="width: 28%;"></div>
+        </div>
+        <div style="font-size: 0.68rem; color: var(--text-muted);">Zero egress charges • 7.2 GB Free</div>
+      </div>
+
+      <!-- 2. Cloudinary -->
+      <div class="storage-provider-card">
+        <div class="storage-provider-header">
+          <span class="provider-name">2. Cloudinary</span>
+          <span style="font-size: 0.65rem; color: var(--text-muted); font-weight: 700;">SECONDARY</span>
+        </div>
+        <div style="font-size: 1.15rem; font-family: var(--font-serif); font-weight: 600;">8.4 GB / 25 GB</div>
+        <div class="storage-bar-bg">
+          <div class="storage-bar-fill" style="width: 33%;"></div>
+        </div>
+        <div style="font-size: 0.68rem; color: var(--text-muted);">Auto transformations • 16.6 GB Free</div>
+      </div>
+
+      <!-- 3. Backblaze B2 -->
+      <div class="storage-provider-card">
+        <div class="storage-provider-header">
+          <span class="provider-name">3. Backblaze B2</span>
+          <span style="font-size: 0.65rem; color: var(--text-muted); font-weight: 700;">RESERVE</span>
+        </div>
+        <div style="font-size: 1.15rem; font-family: var(--font-serif); font-weight: 600;">1.2 GB / 10 GB</div>
+        <div class="storage-bar-bg">
+          <div class="storage-bar-fill" style="width: 12%;"></div>
+        </div>
+        <div style="font-size: 0.68rem; color: var(--text-muted);">Cold reserve • 8.8 GB Free</div>
+      </div>
+
+      <!-- 4. Firebase -->
+      <div class="storage-provider-card">
+        <div class="storage-provider-header">
+          <span class="provider-name">4. Firebase</span>
+          <span style="font-size: 0.65rem; color: var(--text-muted); font-weight: 700;">OVERFLOW</span>
+        </div>
+        <div style="font-size: 1.15rem; font-family: var(--font-serif); font-weight: 600;">0.5 GB / 5 GB</div>
+        <div class="storage-bar-bg">
+          <div class="storage-bar-fill" style="width: 10%;"></div>
+        </div>
+        <div style="font-size: 0.68rem; color: var(--text-muted);">Emergency tier • 4.5 GB Free</div>
+      </div>
+    </section>
+
+    <!-- ALBUMS TABLE / LIST -->
+    <div class="admin-card">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem;">
+        <h3 class="modal-title" style="font-size: 1.35rem;">Active Client Photo Delivery Albums</h3>
+        <span style="font-size: 0.75rem; color: var(--text-muted); font-family: var(--font-mono);">6 Albums Configured</span>
+      </div>
+
+      <div style="overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.82rem;">
+          <thead>
+            <tr style="border-bottom: 1px solid var(--border-subtle); color: var(--text-muted); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.12em;">
+              <th style="padding: 10px 12px;">Album / Couple</th>
+              <th style="padding: 10px 12px;">Client Email</th>
+              <th style="padding: 10px 12px;">Photos / Size</th>
+              <th style="padding: 10px 12px;">Status / Expiry</th>
+              <th style="padding: 10px 12px; text-align: right;">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style="border-bottom: 1px solid var(--border-subtle);">
+              <td style="padding: 14px 12px;">
+                <div style="font-weight: 700; color: var(--text-primary);">Alia & Ranbir</div>
+                <div style="font-size: 0.72rem; color: var(--text-muted);">Slug: /a/alia-ranbir • Vastu Mumbai</div>
+              </td>
+              <td style="padding: 14px 12px;">alia.b@gmail.com</td>
+              <td style="padding: 14px 12px;">720 Photos (1.1 GB)</td>
+              <td style="padding: 14px 12px;">
+                <span class="chip-tag badge-permanent">PERMANENT ARCHIVE</span>
+              </td>
+              <td style="padding: 14px 12px; text-align: right;">
+                <button class="btn-secondary" style="padding: 5px 10px;" onclick="AdminController.openQRModal('alia-ranbir', 'Alia & Ranbir • The Katni Creation')">QR</button>
+                <a href="/admin/album-manage.html?slug=alia-ranbir" class="btn-secondary" style="padding: 5px 10px;">Upload</a>
+                <a href="/a/alia-ranbir" target="_blank" class="btn-primary" style="padding: 5px 10px;">View ↗</a>
+              </td>
+            </tr>
+
+            <tr style="border-bottom: 1px solid var(--border-subtle);">
+              <td style="padding: 14px 12px;">
+                <div style="font-weight: 700; color: var(--text-primary);">Sangeeta & Jake</div>
+                <div style="font-size: 0.72rem; color: var(--text-muted);">Slug: /a/sangeeta-jake • Provence France</div>
+              </td>
+              <td style="padding: 14px 12px;">sangeeta.j@outlook.com</td>
+              <td style="padding: 14px 12px;">450 Photos (680 MB)</td>
+              <td style="padding: 14px 12px;">
+                <span class="chip-tag badge-active">ACTIVE • 21 DAYS</span>
+              </td>
+              <td style="padding: 14px 12px; text-align: right;">
+                <button class="btn-secondary" style="padding: 5px 10px;" onclick="AdminController.openQRModal('sangeeta-jake', 'Sangeeta & Jake • The Katni Creation')">QR</button>
+                <a href="/admin/album-manage.html?slug=sangeeta-jake" class="btn-secondary" style="padding: 5px 10px;">Upload</a>
+                <a href="/a/sangeeta-jake" target="_blank" class="btn-primary" style="padding: 5px 10px;">View ↗</a>
+              </td>
+            </tr>
+
+            <tr style="border-bottom: 1px solid var(--border-subtle);">
+              <td style="padding: 14px 12px;">
+                <div style="font-weight: 700; color: var(--text-primary);">Deepal & Nishant</div>
+                <div style="font-size: 0.72rem; color: var(--text-muted);">Slug: /a/deepal-nishant • Heritage Kumar</div>
+              </td>
+              <td style="padding: 14px 12px;">deepal.n@gmail.com</td>
+              <td style="padding: 14px 12px;">290 Photos (410 MB)</td>
+              <td style="padding: 14px 12px;">
+                <span class="chip-tag badge-expiring">5 DAYS (AUTO-CLEANUP)</span>
+              </td>
+              <td style="padding: 14px 12px; text-align: right;">
+                <button class="btn-secondary" style="padding: 5px 10px;" onclick="AdminController.openQRModal('deepal-nishant', 'Deepal & Nishant • The Katni Creation')">QR</button>
+                <a href="/admin/album-manage.html?slug=deepal-nishant" class="btn-secondary" style="padding: 5px 10px;">Upload</a>
+                <a href="/a/deepal-nishant" target="_blank" class="btn-primary" style="padding: 5px 10px;">View ↗</a>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 🛡️ REAL-TIME PHOTO DOWNLOAD & ACCESS SURVEILLANCE LOGS (ANTI-MISUSE TRACKING) -->
+    <div class="admin-card">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem;">
+        <div>
+          <h3 class="modal-title" style="font-size: 1.35rem;">🛡️ Live Photo Download Surveillance & Audit Trail</h3>
+          <p style="font-size: 0.78rem; color: var(--text-secondary);">
+            Tracks exactly which Gmail user downloaded which specific photo or ZIP archive for complete misuse traceability.
+          </p>
+        </div>
+        <button class="btn-secondary" onclick="renderLiveAuditLogs()" style="font-size: 0.7rem; padding: 6px 12px;">
+          🔄 Refresh Logs
+        </button>
+      </div>
+
+      <div style="overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.78rem;">
+          <thead>
+            <tr style="border-bottom: 1px solid var(--border-subtle); color: var(--text-muted); font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.12em;">
+              <th style="padding: 8px 10px;">Timestamp</th>
+              <th style="padding: 8px 10px;">User Gmail Address</th>
+              <th style="padding: 8px 10px;">Action Event</th>
+              <th style="padding: 8px 10px;">Specific Photo / Asset Downloaded</th>
+              <th style="padding: 8px 10px;">Device / Browser</th>
+            </tr>
+          </thead>
+          <tbody id="live-audit-table-body">
+            <!-- Rendered dynamically from localStorage & API -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <script src="/js/auth.js"></script>
+  <script src="/js/qr.js"></script>
+  <script src="/js/admin.js"></script>
+  <script>
+    function renderLiveAuditLogs() {
+      const tbody = document.getElementById('live-audit-table-body');
+      const logs = JSON.parse(localStorage.getItem('photovault_access_logs') || '[]');
+
+      // Default mock entries if empty
+      const defaultLogs = [
+        { time: 'Just now', email: 'rahul.sharma@gmail.com', event: 'DOWNLOAD_SINGLE', photoName: 'vows_balcony_001.webp', device: 'iPhone 15 Pro (Safari)' },
+        { time: '14 mins ago', email: 'priya.verma@gmail.com', event: 'DOWNLOAD_ZIP', photoName: 'All 6 Photos (ZIP Archive)', device: 'MacBook Air (Chrome)' },
+        { time: '1 hour ago', email: 'uncle.kapoor@gmail.com', event: 'VIEW_ALBUM', photoName: 'Alia & Ranbir Gallery', device: 'Android Phone (Chrome)' }
+      ];
+
+      const allLogs = logs.length > 0 ? logs : defaultLogs;
+
+      tbody.innerHTML = allLogs.map(log => `
+        <tr style="border-bottom: 1px solid var(--border-subtle);">
+          <td style="padding: 10px; color: var(--text-muted); font-family: var(--font-mono); font-size: 0.72rem;">${log.time || 'Just now'}</td>
+          <td style="padding: 10px; font-weight: 700; color: var(--text-primary); font-family: var(--font-mono);">${log.email}</td>
+          <td style="padding: 10px;">
+            <span class="chip-tag" style="${log.event === 'DOWNLOAD_ZIP' ? 'background: #D1FAE5; color: #065F46;' : log.event === 'DOWNLOAD_SINGLE' ? 'background: #FEF3C7; color: #92400E;' : 'background: #E0E7FF; color: #3730A3;'}">
+              ${log.event}
+            </span>
+          </td>
+          <td style="padding: 10px; font-weight: 600; color: #333;">${log.photoName}</td>
+          <td style="padding: 10px; color: var(--text-muted);">${log.device}</td>
+        </tr>
+      `).join('');
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      renderLiveAuditLogs();
+    });
+  </script>
+</body>
+</html>

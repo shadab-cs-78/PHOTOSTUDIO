@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Katni Creation — Studio Admin Login</title>
+  <link rel="icon" type="image/svg+xml" href="/assets/logo.svg">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body style="display: flex; align-items: center; justify-content: center; min-height: 100vh; background: var(--bg-main);">
+
+  <div class="modal-dialog" style="max-width: 440px; box-shadow: var(--shadow-xl); border: 1px solid var(--border-subtle);">
+    <div style="text-align: center; margin-bottom: 2rem;">
+      <a href="/" style="display: inline-block; margin-bottom: 1rem;">
+        <img src="/assets/logo.svg" alt="The Katni Creation" style="height: 48px; width: auto;">
+      </a>
+      <h2 class="modal-title" style="font-size: 1.5rem;">Studio Admin Sign In</h2>
+      <p class="modal-subtitle" style="font-size: 0.8rem;">Manage client delivery albums, face enrollments, and multi-cloud storage.</p>
+    </div>
+
+    <form id="admin-login-form" onsubmit="event.preventDefault(); handleAdminLogin();">
+      <div class="form-group">
+        <label class="form-label">Studio Email</label>
+        <input type="email" id="admin-email" class="form-input" value="thekatnicreation@gmail.com" required>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input type="password" id="admin-password" class="form-input" value="admin123" required>
+      </div>
+
+      <button type="submit" class="btn-primary" style="width: 100%; justify-content: center; padding: 12px; margin-top: 0.5rem;">
+        Sign In to Dashboard
+      </button>
+    </form>
+
+    <div style="margin-top: 1.5rem; text-align: center; border-top: 1px solid var(--border-subtle); padding-top: 1.25rem;">
+      <a href="/" style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.12em; font-weight: 600;">
+        ← Return to Public Portfolio
+      </a>
+    </div>
+  </div>
+
+  <script src="/js/auth.js"></script>
+  <script src="/js/admin.js"></script>
+  <script>
+    function handleAdminLogin() {
+      const email = document.getElementById('admin-email').value;
+      const pass = document.getElementById('admin-password').value;
+      const res = AuthManager.loginAdmin(email, pass);
+      if (res.success) {
+        window.location.href = '/admin/dashboard.html';
+      } else {
+        alert(res.error);
+      }
+    }
+  </script>
+</body>
+</html>

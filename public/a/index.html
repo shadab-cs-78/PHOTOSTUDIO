@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wedding Delivery Monograph — The Katni Creation</title>
+  <link rel="icon" type="image/svg+xml" href="/assets/logo.svg">
+  <link rel="stylesheet" href="/css/style.css">
+  <!-- JSZip CDN for in-browser client ZIP packaging -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <!-- QRCode.js CDN for sharing -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header class="site-header">
+    <div class="nav-container">
+      <div class="brand-wrapper">
+        <a href="/" style="display: flex; align-items: center; gap: 10px;">
+          <img src="/assets/logo.svg" alt="The Katni Creation" style="height: 38px; width: auto;">
+        </a>
+      </div>
+      <div class="nav-actions">
+        <div id="logged-user-pill" style="display: none; font-size: 0.72rem; background: var(--bg-secondary); border: 1px solid var(--border-subtle); padding: 5px 10px; border-radius: var(--radius-xs);">
+          👤 <span id="logged-email-text" style="font-weight: 600;">client@gmail.com</span>
+        </div>
+        <button class="portal-badge-btn" onclick="QRUtil.shareWhatsApp(window.location.href, document.getElementById('album-title-text').innerText)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+          Share Gallery
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN GALLERY CONTAINER -->
+  <main class="container">
+    <!-- Album Title Header -->
+    <section class="gallery-header-section">
+      <div class="index-meta-label">
+        <span id="album-location-text">THE KATNI CREATION STUDIO</span>
+        <span class="bullet">/</span>
+        <span id="album-date-text">CLIENT ARCHIVAL DELIVERY</span>
+      </div>
+      <h1 class="hero-main-title" id="album-title-text" style="font-size: 2.8rem; margin-bottom: 0.5rem;">Alia & Ranbir</h1>
+      <p class="hero-subtext" id="album-desc-text">
+        Lossless fine-art monograph captured by <strong>The Katni Creation</strong>. Clean 4K high-res photo delivery.
+      </p>
+
+      <div class="gallery-action-bar">
+        <div class="countdown-timer-box" id="expiry-countdown-box">
+          <span>EXPIRY: <strong>21d 14h 28m</strong></span>
+        </div>
+
+        <div style="display: flex; gap: 0.75rem;">
+          <button class="btn-secondary" onclick="QRUtil.copyToClipboard(window.location.href)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            Copy QR Link
+          </button>
+          <button class="btn-primary" id="btn-download-all-zip">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Download All Photos (ZIP)
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- MASONRY PHOTO GALLERY GRID -->
+    <section class="masonry-grid" id="masonry-gallery-container">
+      <!-- Injected via GalleryManager -->
+    </section>
+  </main>
+
+  <!-- ==============================================================================
+       SIGN IN WITH GMAIL MODAL
+       ============================================================================== -->
+  <div class="modal-overlay" id="verification-modal">
+    <div class="modal-dialog">
+      <div class="modal-header" style="text-align: center;">
+        <div style="margin-bottom: 0.75rem;">
+          <img src="/assets/logo.svg" alt="The Katni Creation" style="height: 42px;">
+        </div>
+        <div class="modal-tag">PRIVATE WEDDING DELIVERY</div>
+        <h3 class="modal-title">Sign in to View Album</h3>
+        <p class="modal-subtitle">Apna Gmail address daal kar wedding photos unlock karein.</p>
+      </div>
+
+      <!-- Gmail Sign In Form -->
+      <form id="gmail-signin-form" onsubmit="event.preventDefault(); handleGmailSignIn();">
+        <div class="form-group">
+          <label class="form-label">Aapka Gmail Address</label>
+          <input type="email" id="user-gmail-input" class="form-input" placeholder="e.g. rahul.sharma@gmail.com" required autofocus>
+        </div>
+
+        <button type="submit" class="btn-primary" style="width: 100%; justify-content: center; padding: 12px; font-size: 0.75rem;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="margin-right: 4px;"><path d="M12.48 10.9v3.26h5.86c-.25 1.58-1.84 4.63-5.86 4.63-3.53 0-6.42-2.9-6.42-6.49 0-3.58 2.89-6.48 6.42-6.48 2.01 0 3.36.86 4.13 1.6l2.58-2.5C17.55 3.3 15.22 2.3 12.48 2.3 7.02 2.3 2.6 6.72 2.6 12.18s4.42 9.88 9.88 9.88c5.71 0 9.5-4.01 9.5-9.67 0-.65-.07-1.14-.16-1.5z"/></svg>
+          Continue & Unlock Gallery
+        </button>
+      </form>
+
+      <!-- 1-Click Quick Demo Access Button -->
+      <div style="margin-top: 1rem; text-align: center;">
+        <button type="button" onclick="handleQuickDemoSignIn()" style="font-size: 0.72rem; color: var(--accent-gold-dark); text-decoration: underline; font-weight: 600;">
+          Direct 1-Click Guest Access (Instant Demo)
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-columns-grid">
+        <div>
+          <img src="/assets/logo.svg" alt="The Katni Creation" style="height: 44px; margin-bottom: 0.75rem;">
+          <p class="footer-text">
+            Official delivery portal for The Katni Creation clients and families.
+          </p>
+        </div>
+        <div>
+          <div class="footer-col-title">Studio Base</div>
+          <p class="footer-text">
+            Alpha Canteen ke samne, Tilak College Campus, Katni (M.P.)
+          </p>
+        </div>
+        <div>
+          <div class="footer-col-title">Direct Helpline</div>
+          <p class="footer-text">
+            📞 +91 6264220191<br>
+            📞 +91 7723091189<br>
+            📸 Insta: <strong>@the_katnicreation</strong>
+          </p>
+        </div>
+        <div>
+          <div class="footer-col-title">Need Custom Frames?</div>
+          <p class="footer-text">
+            Contact studio for premium acrylic prints, albums & video edits.
+          </p>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="/js/qr.js"></script>
+  <script src="/js/gallery.js"></script>
+  <script src="/js/admin.js"></script>
+
+  <script>
+    const samplePhotos = [
+      { url: 'https://images.unsplash.com/photo-1583939003579-730e3918a45a?auto=format&fit=crop&w=1600&q=85', thumbnail_url: 'https://images.unsplash.com/photo-1583939003579-730e3918a45a?auto=format&fit=crop&w=800&q=80', original_name: 'vows_balcony_001.webp', provider: 'Cloudflare R2', size_bytes: 1420000 },
+      { url: 'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1600&q=85', thumbnail_url: 'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=800&q=80', original_name: 'ceremony_walk_002.webp', provider: 'Cloudflare R2', size_bytes: 1680000 },
+      { url: 'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=1600&q=85', thumbnail_url: 'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=800&q=80', original_name: 'palace_portrait_003.webp', provider: 'Cloudinary Edge', size_bytes: 1540000 },
+      { url: 'https://images.unsplash.com/photo-1606800052052-a08af7148866?auto=format&fit=crop&w=1600&q=85', thumbnail_url: 'https://images.unsplash.com/photo-1606800052052-a08af7148866?auto=format&fit=crop&w=800&q=80', original_name: 'reception_candlelight_004.webp', provider: 'Backblaze B2', size_bytes: 1390000 },
+      { url: 'https://images.unsplash.com/photo-1544078751-58fee2d8a03b?auto=format&fit=crop&w=1600&q=85', thumbnail_url: 'https://images.unsplash.com/photo-1544078751-58fee2d8a03b?auto=format&fit=crop&w=800&q=80', original_name: 'sundown_soiree_005.webp', provider: 'Cloudflare R2', size_bytes: 1720000 },
+      { url: 'https://images.unsplash.com/photo-1583939411023-14783179e581?auto=format&fit=crop&w=1600&q=85', thumbnail_url: 'https://images.unsplash.com/photo-1583939411023-14783179e581?auto=format&fit=crop&w=800&q=80', original_name: 'haldi_mandap_006.webp', provider: 'Firebase Reserve', size_bytes: 1280000 }
+    ];
+
+    let currentSlug = 'alia-ranbir';
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const pathParts = window.location.pathname.split('/').filter(Boolean);
+      const urlParams = new URLSearchParams(window.location.search);
+      currentSlug = urlParams.get('slug') || (pathParts.length > 1 ? pathParts[1] : 'alia-ranbir');
+
+      GalleryManager.renderMasonry('masonry-gallery-container', samplePhotos);
+      GalleryManager.startExpiryCountdown('expiry-countdown-box', new Date(Date.now() + 21 * 24 * 60 * 60 * 1000).toISOString());
+
+      // Check existing saved Gmail session
+      const savedEmail = localStorage.getItem('photovault_client_email');
+      if (savedEmail) {
+        showUserPill(savedEmail);
+      } else {
+        document.getElementById('verification-modal').classList.add('active');
+      }
+
+      // Download All ZIP button (Clean Original Photos)
+      document.getElementById('btn-download-all-zip').addEventListener('click', () => {
+        GalleryManager.downloadAllZip('the_katni_creation_wedding');
+      });
+    });
+
+    function showUserPill(email) {
+      document.getElementById('logged-user-pill').style.display = 'block';
+      document.getElementById('logged-email-text').innerText = email;
+    }
+
+    // Handle Gmail Sign In
+    function handleGmailSignIn() {
+      const email = document.getElementById('user-gmail-input').value.trim();
+      if (email && email.includes('@')) {
+        localStorage.setItem('photovault_client_email', email);
+        showUserPill(email);
+        document.getElementById('verification-modal').classList.remove('active');
+        if (window.showToast) window.showToast(`✓ Welcome ${email}!`);
+      } else {
+        alert('Kripya valid Gmail address enter karein.');
+      }
+    }
+
+    // Quick Demo access
+    function handleQuickDemoSignIn() {
+      const demoEmail = 'guest.relative@gmail.com';
+      localStorage.setItem('photovault_client_email', demoEmail);
+      showUserPill(demoEmail);
+      document.getElementById('verification-modal').classList.remove('active');
+      if (window.showToast) window.showToast(`✓ Welcome ${demoEmail}!`);
+    }
+  </script>
+</body>
+</html>

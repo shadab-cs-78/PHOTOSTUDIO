@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Katni Creation — Luxury Wedding Photography & Client Delivery Portal</title>
+  <meta name="description" content="The Katni Creation: Wedding, Pre-Wedding, Event & Birthday Shoots, Luxury Album Designing, Video Editing, and Customized Frames in Katni, M.P.">
+  <link rel="icon" type="image/svg+xml" href="/assets/logo.svg">
+  <link rel="stylesheet" href="/css/style.css">
+  <!-- QRCode.js CDN for client-side QR generation -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</head>
+<body>
+
+  <!-- SITE HEADER NAVIGATION -->
+  <header class="site-header">
+    <div class="nav-container">
+      <div class="brand-wrapper">
+        <a href="/" style="display: flex; align-items: center; gap: 10px;">
+          <img src="/assets/logo.svg" alt="The Katni Creation" style="height: 40px; width: auto;">
+        </a>
+      </div>
+
+      <ul class="nav-links">
+        <li><a href="/" class="nav-link active">Portfolio</a></li>
+        <li><a href="#services" class="nav-link">Our Services</a></li>
+        <li><a href="#contact" class="nav-link">Studio Details</a></li>
+        <li><a href="/admin/dashboard.html" class="nav-link">Admin Dashboard</a></li>
+      </ul>
+
+      <div class="nav-actions">
+        <a href="https://instagram.com/the_katnicreation" target="_blank" class="portal-badge-btn" style="background: linear-gradient(135deg, #F9E7C4 0%, #EAD2A8 100%); color: #4A3414;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+          <span>@the_katnicreation</span>
+        </a>
+        <a href="/admin/login.html" class="user-avatar-btn" title="Photographer Admin Portal">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+          </svg>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- HERO & ARCHIVAL INDEX SECTION -->
+  <main class="container">
+    <section class="hero-index-section">
+      <div class="hero-grid">
+        <!-- Left Title Column -->
+        <div>
+          <div class="index-meta-label">
+            <span>THE KATNI CREATION STUDIO</span>
+            <span class="bullet">/</span>
+            <span>Master Archival Index 2026</span>
+          </div>
+          <h1 class="hero-main-title">The Wedding Archives & Portfolios</h1>
+          <p class="hero-subtext">
+            Capturing timeless romance, royal weddings, pre-weddings & cinematic stories in Katni, Madhya Pradesh and beyond. Scan the couple's QR code below for instant private gallery delivery.
+          </p>
+
+          <!-- Quick Studio Contacts Pill Bar -->
+          <div style="display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 1.25rem;">
+            <a href="tel:6264220191" class="chip-tag" style="background: #FFFFFF; border: 1px solid var(--border-subtle); color: var(--text-primary); font-size: 0.72rem; padding: 6px 12px; display: inline-flex; align-items: center; gap: 6px;">
+              📞 +91 6264220191
+            </a>
+            <a href="tel:7723091189" class="chip-tag" style="background: #FFFFFF; border: 1px solid var(--border-subtle); color: var(--text-primary); font-size: 0.72rem; padding: 6px 12px; display: inline-flex; align-items: center; gap: 6px;">
+              📞 +91 7723091189
+            </a>
+            <span class="chip-tag" style="background: var(--bg-secondary); border: 1px solid var(--border-subtle); font-size: 0.72rem; padding: 6px 12px;">
+              📍 Alpha Canteen samne, Tilak College, Katni (M.P.)
+            </span>
+          </div>
+        </div>
+
+        <!-- Right Specs / Metrics Grid -->
+        <div class="specs-metrics-grid" id="specs">
+          <div class="spec-metric-card">
+            <div class="spec-title">Global Monograph</div>
+            <div class="spec-value">1,420+</div>
+            <div class="spec-subtitle">Curated Stories<br><span style="color: var(--text-muted); font-size: 0.66rem;">Archived in 4K Lossless</span></div>
+          </div>
+
+          <div class="spec-metric-card">
+            <div class="spec-title">Multi-Cloud Storage</div>
+            <div class="spec-value" style="font-size: 1.35rem; line-height: 1.35;">Zero-Cost Edge</div>
+            <div class="spec-subtitle">Cloudflare R2<br><span style="color: var(--text-muted); font-size: 0.66rem;">Cloudinary 25GB</span></div>
+          </div>
+
+          <div class="spec-metric-card">
+            <div class="spec-title">Handoff Pipeline</div>
+            <div class="spec-value" style="font-size: 1.35rem; line-height: 1.35;">Auto QR Direct</div>
+            <div class="spec-subtitle">Lossless<br><span style="color: var(--text-muted); font-size: 0.66rem;">WebP/80% Streaming</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- FILTER PILLS & SEARCH ROW -->
+      <div class="filter-search-container">
+        <div class="filter-pills-list" id="category-filters">
+          <button class="filter-pill active" data-category="all">All Celebrations</button>
+          <button class="filter-pill" data-category="royal">Royal Palaces & Forts</button>
+          <button class="filter-pill" data-category="villas">Amalfi & Destination</button>
+          <button class="filter-pill" data-category="modern">Intimate Balcony & Modern</button>
+          <button class="filter-pill" data-category="film">Film Editions</button>
+        </div>
+
+        <div class="search-box-wrapper">
+          <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input type="text" id="archive-search-input" class="search-input" placeholder="Search couple, venue, or shoot...">
+        </div>
+      </div>
+    </section>
+
+    <!-- ARCHIVES 3x2 GRID -->
+    <section class="archives-grid" id="archives-grid-container">
+      <!-- 1. Alia & Ranbir -->
+      <article class="album-card" data-category="modern" data-title="Alia & Ranbir" data-location="Vastu Mumbai">
+        <div class="card-image-wrap">
+          <img class="card-img" src="https://images.unsplash.com/photo-1583939003579-730e3918a45a?auto=format&fit=crop&w=800&q=80" alt="Alia & Ranbir">
+          <span class="badge-status-top badge-permanent">Permanent Archive</span>
+          <span class="badge-storage-bottom">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><rect width="18" height="18" x="3" y="3" rx="2"/></svg>
+            Scan Ready
+          </span>
+        </div>
+        <div class="card-body">
+          <div class="card-location-row">
+            <span>VASTU • MUMBAI</span>
+            <span>720 WebP Photos</span>
+          </div>
+          <h3 class="card-title">Alia & Ranbir</h3>
+          <p class="card-desc">Sun-drenched balcony vows at their ancestral residence, surrounded by family, delicate brass candelabras, and botanical arches.</p>
+          <div class="card-tags">
+            <span class="chip-tag">30 GUESTS</span>
+            <span class="chip-tag">BALCONY UNION</span>
+            <span class="chip-tag">THE KATNI CREATION</span>
+          </div>
+          <div class="card-action-footer">
+            <a href="/a/alia-ranbir" class="view-gallery-link">
+              View Delivery Gallery & QR
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            </a>
+            <div class="card-quick-actions">
+              <button class="quick-icon-btn" title="Open QR Code" onclick="AdminController.openQRModal('alia-ranbir', 'Alia & Ranbir • The Katni Creation')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <!-- 2. Sangeeta & Jake -->
+      <article class="album-card" data-category="villas" data-title="Sangeeta & Jake" data-location="Provence France">
+        <div class="card-image-wrap">
+          <img class="card-img" src="https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=800&q=80" alt="Sangeeta & Jake">
+          <span class="badge-status-top badge-active">Active • 21 Days Left</span>
+          <span class="badge-storage-bottom">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="6"/></svg>
+            R2 Direct CDN
+          </span>
+        </div>
+        <div class="card-body">
+          <div class="card-location-row">
+            <span>PROVENCE • FRANCE</span>
+            <span>450 WebP Photos</span>
+          </div>
+          <h3 class="card-title">Sangeeta & Jake</h3>
+          <p class="card-desc">An intimate Provencal weekend union nestled among century-old olive groves, open-fire dining, and acoustic sunset serenades.</p>
+          <div class="card-tags">
+            <span class="chip-tag">DESTINATION VILLA</span>
+            <span class="chip-tag">450 WEBP PHOTOS</span>
+            <span class="chip-tag">CLOUDFLARE R2</span>
+          </div>
+          <div class="card-action-footer">
+            <a href="/a/sangeeta-jake" class="view-gallery-link">
+              View Delivery Gallery & QR
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            </a>
+            <div class="card-quick-actions">
+              <button class="quick-icon-btn" title="Open QR Code" onclick="AdminController.openQRModal('sangeeta-jake', 'Sangeeta & Jake • The Katni Creation')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <!-- 3. Reva & Zach -->
+      <article class="album-card" data-category="royal" data-title="Reva & Zach" data-location="City Palace Udaipur">
+        <div class="card-image-wrap">
+          <img class="card-img" src="https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=800&q=80" alt="Reva & Zach">
+          <span class="badge-status-top badge-active">Active • 14 Days Left</span>
+          <span class="badge-storage-bottom">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z"/></svg>
+            Cloudinary 25GB
+          </span>
+        </div>
+        <div class="card-body">
+          <div class="card-location-row">
+            <span>CITY PALACE • UDAIPUR</span>
+            <span>580 WebP Photos</span>
+          </div>
+          <h3 class="card-title">Reva & Zach</h3>
+          <p class="card-desc">Four days of royal pageantry on the banks of Lake Pichola. Regal procession, mirror-mosaic courtyards, and grand fireworks display.</p>
+          <div class="card-tags">
+            <span class="chip-tag">ROYAL HERITAGE</span>
+            <span class="chip-tag">450 GUESTS</span>
+            <span class="chip-tag">THE KATNI CREATION</span>
+          </div>
+          <div class="card-action-footer">
+            <a href="/a/reva-zach" class="view-gallery-link">
+              View Delivery Gallery & QR
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            </a>
+            <div class="card-quick-actions">
+              <button class="quick-icon-btn" title="Open QR Code" onclick="AdminController.openQRModal('reva-zach', 'Reva & Zach • The Katni Creation')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <!-- 4. Manisha & Christopher -->
+      <article class="album-card" data-category="modern" data-title="Manisha & Christopher" data-location="Capella Singapore">
+        <div class="card-image-wrap">
+          <img class="card-img" src="https://images.unsplash.com/photo-1606800052052-a08af7148866?auto=format&fit=crop&w=800&q=80" alt="Manisha & Christopher">
+          <span class="badge-status-top badge-active">Active • 28 Days Left</span>
+          <span class="badge-storage-bottom">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><rect width="18" height="18" x="3" y="3" rx="2"/></svg>
+            Backblaze B2
+          </span>
+        </div>
+        <div class="card-body">
+          <div class="card-location-row">
+            <span>CAPELLA • SINGAPORE</span>
+            <span>390 WebP Photos</span>
+          </div>
+          <h3 class="card-title">Manisha & Christopher</h3>
+          <p class="card-desc">Tropical brutalism meets refined heritage colonial lawns. Minimalist botanical styling and fine-contrast black and white captures.</p>
+          <div class="card-tags">
+            <span class="chip-tag">MODERN MONOCHROME</span>
+            <span class="chip-tag">390 PHOTOS</span>
+            <span class="chip-tag">THE KATNI CREATION</span>
+          </div>
+          <div class="card-action-footer">
+            <a href="/a/manisha-chris" class="view-gallery-link">
+              View Delivery Gallery & QR
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            </a>
+            <div class="card-quick-actions">
+              <button class="quick-icon-btn" title="Open QR Code" onclick="AdminController.openQRModal('manisha-chris', 'Manisha & Christopher • The Katni Creation')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <!-- 5. Hiba & Akbar -->
+      <article class="album-card" data-category="film" data-title="Hiba & Akbar" data-location="Jehan Numa Bhopal">
+        <div class="card-image-wrap">
+          <img class="card-img" src="https://images.unsplash.com/photo-1544078751-58fee2d8a03b?auto=format&fit=crop&w=800&q=80" alt="Hiba & Akbar">
+          <span class="badge-status-top badge-permanent">Permanent Archive</span>
+          <span class="badge-storage-bottom">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            Film & Stills
+          </span>
+        </div>
+        <div class="card-body">
+          <div class="card-location-row">
+            <span>JEHAN NUMA • BHOPAL</span>
+            <span>410 WebP Photos</span>
+          </div>
+          <h3 class="card-title">Hiba & Akbar</h3>
+          <p class="card-desc">Twenty years in the making. A heartfelt celebration of childhood love across white verandas, ghazal soirees, and candlelit courtyard nikah.</p>
+          <div class="card-tags">
+            <span class="chip-tag">FILM & STILLS</span>
+            <span class="chip-tag">410 PHOTOS</span>
+            <span class="chip-tag">THE KATNI CREATION</span>
+          </div>
+          <div class="card-action-footer">
+            <a href="/a/hiba-akbar" class="view-gallery-link">
+              View Delivery Gallery & QR
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            </a>
+            <div class="card-quick-actions">
+              <button class="quick-icon-btn" title="Open QR Code" onclick="AdminController.openQRModal('hiba-akbar', 'Hiba & Akbar • The Katni Creation')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <!-- 6. Deepal & Nishant -->
+      <article class="album-card" data-category="royal" data-title="Deepal & Nishant" data-location="Heritage Kumar">
+        <div class="card-image-wrap">
+          <img class="card-img" src="https://images.unsplash.com/photo-1583939411023-14783179e581?auto=format&fit=crop&w=800&q=80" alt="Deepal & Nishant">
+          <span class="badge-status-top badge-expiring">5 Days Left (Auto Reminder)</span>
+          <span class="badge-storage-bottom">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            Near Expiry
+          </span>
+        </div>
+        <div class="card-body">
+          <div class="card-location-row">
+            <span>HERITAGE • KUMAR</span>
+            <span>290 WebP Photos</span>
+          </div>
+          <h3 class="card-title">Deepal & Nishant</h3>
+          <p class="card-desc">A graceful ode to finding love again. An intimate sunset celebration among ancient sandstone pillars, acoustic sitar, and rosewood florals.</p>
+          <div class="card-tags">
+            <span class="chip-tag">INTIMATE STORY</span>
+            <span class="chip-tag">290 PHOTOS</span>
+            <span class="chip-tag">THE KATNI CREATION</span>
+          </div>
+          <div class="card-action-footer">
+            <a href="/a/deepal-nishant" class="view-gallery-link">
+              View Delivery Gallery & QR
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            </a>
+            <div class="card-quick-actions">
+              <button class="quick-icon-btn" title="Open QR Code" onclick="AdminController.openQRModal('deepal-nishant', 'Deepal & Nishant • The Katni Creation')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <!-- OUR SERVICES & STUDIO SPECIALIZATIONS SECTION -->
+    <section id="services" style="margin-bottom: 4.5rem; background: #FFFFFF; border: 1px solid var(--border-subtle); border-radius: var(--radius-xs); padding: 3rem 2.5rem;">
+      <div style="text-align: center; max-width: 700px; margin: 0 auto 2.5rem;">
+        <div class="index-meta-label" style="justify-content: center;">
+          <span>THE KATNI CREATION &bull; SERVICES & EXPERTISE</span>
+        </div>
+        <h2 style="font-family: var(--font-serif); font-size: 2.4rem; color: var(--text-primary); margin-bottom: 0.5rem;">
+          Complete Photography & Cinematography Suite
+        </h2>
+        <p style="font-size: 0.88rem; color: var(--text-secondary);">
+          From high-end wedding documentation to luxury personalized albums and frames crafted with utmost artistic precision.
+        </p>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.5rem;">
+        <!-- 1. Wedding Shoots -->
+        <div style="background: var(--bg-main); border: 1px solid var(--border-card); padding: 1.5rem; border-radius: var(--radius-xs);">
+          <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">💍</div>
+          <h3 style="font-family: var(--font-serif); font-size: 1.25rem; margin-bottom: 0.35rem;">Wedding Photography</h3>
+          <p style="font-size: 0.78rem; color: var(--text-secondary); line-height: 1.5;">Traditional, candid, and cinematic bridal portraiture capturing every auspicious ritual and fleeting emotion.</p>
+        </div>
+
+        <!-- 2. Pre-Wedding -->
+        <div style="background: var(--bg-main); border: 1px solid var(--border-card); padding: 1.5rem; border-radius: var(--radius-xs);">
+          <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">✨</div>
+          <h3 style="font-family: var(--font-serif); font-size: 1.25rem; margin-bottom: 0.35rem;">Pre-Wedding Shoots</h3>
+          <p style="font-size: 0.78rem; color: var(--text-secondary); line-height: 1.5;">Romantic destination stories, creative drone aerials, and high-fashion couple portraits with custom styling.</p>
+        </div>
+
+        <!-- 3. Event Shoots -->
+        <div style="background: var(--bg-main); border: 1px solid var(--border-card); padding: 1.5rem; border-radius: var(--radius-xs);">
+          <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">🎉</div>
+          <h3 style="font-family: var(--font-serif); font-size: 1.25rem; margin-bottom: 0.35rem;">Event Shoots</h3>
+          <p style="font-size: 0.78rem; color: var(--text-secondary); line-height: 1.5;">Corporate gatherings, engagement ceremonies, ring ceremonies, sangeet soirees, and grand festivities.</p>
+        </div>
+
+        <!-- 4. Birthday Shoots -->
+        <div style="background: var(--bg-main); border: 1px solid var(--border-card); padding: 1.5rem; border-radius: var(--radius-xs);">
+          <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">🎂</div>
+          <h3 style="font-family: var(--font-serif); font-size: 1.25rem; margin-bottom: 0.35rem;">Birthday Shoots</h3>
+          <p style="font-size: 0.78rem; color: var(--text-secondary); line-height: 1.5;">Kids milestones, theme-based birthday portraits, cake smash sessions, and family celebrations.</p>
+        </div>
+
+        <!-- 5. Album Designing -->
+        <div style="background: var(--bg-main); border: 1px solid var(--border-card); padding: 1.5rem; border-radius: var(--radius-xs);">
+          <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">📖</div>
+          <h3 style="font-family: var(--font-serif); font-size: 1.25rem; margin-bottom: 0.35rem;">Album Designing</h3>
+          <p style="font-size: 0.78rem; color: var(--text-secondary); line-height: 1.5;">Luxury fine-art photo albums, flush-mount hardcovers, Italian leather bind, and velvet-touch printing.</p>
+        </div>
+
+        <!-- 6. Video Editing -->
+        <div style="background: var(--bg-main); border: 1px solid var(--border-card); padding: 1.5rem; border-radius: var(--radius-xs);">
+          <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">🎬</div>
+          <h3 style="font-family: var(--font-serif); font-size: 1.25rem; margin-bottom: 0.35rem;">Cinematic Video Editing</h3>
+          <p style="font-size: 0.78rem; color: var(--text-secondary); line-height: 1.5;">4K color grading, emotional teasers, Instagram reels, wedding film highlights, and sound design.</p>
+        </div>
+
+        <!-- 7. Customized Frames -->
+        <div style="background: var(--bg-main); border: 1px solid var(--border-card); padding: 1.5rem; border-radius: var(--radius-xs);">
+          <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">🖼️</div>
+          <h3 style="font-family: var(--font-serif); font-size: 1.25rem; margin-bottom: 0.35rem;">Customized Frames</h3>
+          <p style="font-size: 0.78rem; color: var(--text-secondary); line-height: 1.5;">Premium acrylic wall art, wooden vintage frames, canvas prints, LED backlit frames & personalized gifts.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ZERO-OVERHEAD INFRASTRUCTURE CALLOUT BANNER -->
+    <section class="infra-banner-section">
+      <div>
+        <div class="infra-meta-tag">
+          <span>THE KATNI CREATION STUDIO CLUSTER</span>
+          <span class="infra-version-badge">v4.2 Production</span>
+        </div>
+        <h2 class="infra-banner-title">Powered by 100% Free Long-Term Architecture</h2>
+        <p class="infra-banner-desc">
+          Supabase Postgres + Cloudflare R2 + Cloudinary Edge (~50GB Combined Free Storage, Auto-WebP 80% compression, Zero Egress Charges).
+        </p>
+      </div>
+      <div>
+        <a href="/admin/dashboard.html" class="btn-admin-dark">Open Admin Dashboard</a>
+      </div>
+    </section>
+  </main>
+
+  <!-- 4-COLUMN EDITORIAL FOOTER WITH SHOP DETAILS -->
+  <footer class="site-footer" id="contact">
+    <div class="container">
+      <div class="footer-columns-grid">
+        <!-- Col 1 -->
+        <div>
+          <div style="margin-bottom: 1rem;">
+            <img src="/assets/logo.svg" alt="The Katni Creation" style="height: 48px; width: auto;">
+          </div>
+          <p class="footer-text" style="margin-bottom: 1rem;">
+            Capturing your unforgettable memories with cinematic mastery, fine-art monographs, and custom heirloom albums.
+          </p>
+          <div style="display: flex; gap: 0.75rem;">
+            <a href="https://instagram.com/the_katnicreation" target="_blank" class="chip-tag" style="background: var(--text-primary); color: #FFF; text-transform: none; font-weight: 600;">
+              📸 Instagram: @the_katnicreation
+            </a>
+          </div>
+        </div>
+
+        <!-- Col 2: Studio Location & Address -->
+        <div>
+          <div class="footer-col-title">Studio Location & Bases</div>
+          <ul class="footer-links-list">
+            <li><strong>The Katni Creation Studio</strong></li>
+            <li>📍 Alpha Canteen ke samne</li>
+            <li>Tilak College Campus</li>
+            <li>Katni, Madhya Pradesh (M.P.)</li>
+          </ul>
+        </div>
+
+        <!-- Col 3: Direct Inquiries & Bookings -->
+        <div>
+          <div class="footer-col-title">Direct Bookings & Contact</div>
+          <ul class="footer-links-list">
+            <li>
+              <a href="tel:6264220191" style="display: inline-flex; align-items: center; gap: 6px;">
+                📞 <strong>+91 6264220191</strong>
+              </a>
+            </li>
+            <li>
+              <a href="tel:7723091189" style="display: inline-flex; align-items: center; gap: 6px;">
+                📞 <strong>+91 7723091189</strong>
+              </a>
+            </li>
+            <li style="margin-top: 8px;">
+              <a href="https://api.whatsapp.com/send?phone=916264220191&text=Hello%20The%20Katni%20Creation,%20I%20would%20like%20to%20inquire%20about%20photo%20shoot%20booking" target="_blank" class="btn-primary" style="padding: 6px 14px; font-size: 0.68rem; background: #25D366; border-color: #25D366; color: #FFF;">
+                💬 WhatsApp Chat
+              </a>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Col 4: Services Overview -->
+        <div>
+          <div class="footer-col-title">Our Services</div>
+          <ul class="footer-links-list" style="font-size: 0.75rem;">
+            <li>• Wedding & Pre-Wedding Shoots</li>
+            <li>• Event & Birthday Shoot Documentation</li>
+            <li>• Premium Wedding Album Designing</li>
+            <li>• Cinematic 4K Video Editing</li>
+            <li>• Customized Frames & Wall Decors</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- BOTTOM COPYRIGHT BAR -->
+      <div class="footer-bottom-bar">
+        <div>© 2026 THE KATNI CREATION. ALL ARCHIVAL RIGHTS RESERVED.</div>
+        <div class="footer-tech-specs">
+          <span>TILAK COLLEGE, KATNI M.P.</span>
+          <span>FILM PRESETS V4.2</span>
+          <span>4K LOSSLESS PIPELINE</span>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="/js/qr.js"></script>
+  <script src="/js/admin.js"></script>
+  <script>
+    // Live Search & Category Filter Interaction
+    document.addEventListener('DOMContentLoaded', () => {
+      const searchInput = document.getElementById('archive-search-input');
+      const filterPills = document.querySelectorAll('.filter-pill');
+      const cards = document.querySelectorAll('.album-card');
+
+      let currentCategory = 'all';
+      let searchQuery = '';
+
+      function filterCards() {
+        cards.forEach(card => {
+          const category = card.getAttribute('data-category');
+          const title = (card.getAttribute('data-title') || '').toLowerCase();
+          const location = (card.getAttribute('data-location') || '').toLowerCase();
+          
+          const matchCategory = (currentCategory === 'all') || (category === currentCategory);
+          const matchSearch = !searchQuery || title.includes(searchQuery) || location.includes(searchQuery);
+
+          if (matchCategory && matchSearch) {
+            card.style.display = 'flex';
+          } else {
+            card.style.display = 'none';
+          }
+        });
+      }
+
+      filterPills.forEach(pill => {
+        pill.addEventListener('click', () => {
+          filterPills.forEach(p => p.classList.remove('active'));
+          pill.classList.add('active');
+          currentCategory = pill.getAttribute('data-category');
+          filterCards();
+        });
+      });
+
+      searchInput.addEventListener('input', (e) => {
+        searchQuery = e.target.value.trim().toLowerCase();
+        filterCards();
+      });
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,23 @@
+{
+  "name": "photovault",
+  "version": "1.1.0",
+  "description": "PHOTOVAULT - Luxury Wedding Photo Delivery Portal with QR & Face Recognition",
+  "main": "local-server.js",
+  "scripts": {
+    "start": "node local-server.js",
+    "dev": "node local-server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "cors": "^2.8.5"
+  },
+  "keywords": [
+    "wedding",
+    "photo-delivery",
+    "photovault",
+    "face-recognition",
+    "qr-code"
+  ],
+  "author": "House on the Clouds / Photovault",
+  "license": "MIT"
+}

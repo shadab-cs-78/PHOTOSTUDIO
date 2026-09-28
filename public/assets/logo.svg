@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 100" width="100%" height="100%">
+  <defs>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#D4AF37" />
+      <stop offset="50%" stop-color="#AA7C11" />
+      <stop offset="100%" stop-color="#E5C158" />
+    </linearGradient>
+    <linearGradient id="charcoalGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1A1A1A" />
+      <stop offset="100%" stop-color="#2D2D2D" />
+    </linearGradient>
+  </defs>
+
+  <!-- Luxury Monogram Emblem / Aperture Shutter Icon -->
+  <g transform="translate(10, 10)">
+    <!-- Outer Shield / Diamond Frame -->
+    <rect x="5" y="5" width="70" height="70" rx="6" fill="none" stroke="url(#goldGrad)" stroke-width="2" />
+    <rect x="10" y="10" width="60" height="60" rx="4" fill="#18181B" />
+    
+    <!-- Camera Aperture Blades & TKC Monogram -->
+    <circle cx="40" cy="40" r="22" fill="none" stroke="url(#goldGrad)" stroke-width="1.5" stroke-dasharray="3, 3" />
+    
+    <!-- Stylized Camera Shutter / Focus Mark -->
+    <circle cx="40" cy="40" r="14" fill="none" stroke="#FFFFFF" stroke-width="1.2" opacity="0.8" />
+    <circle cx="40" cy="40" r="5" fill="url(#goldGrad)" />
+    
+    <!-- Monogram letters TKC -->
+    <text x="40" y="78" font-family="'Plus Jakarta Sans', sans-serif" font-size="7" font-weight="700" fill="url(#goldGrad)" text-anchor="middle" letter-spacing="2">EST. KATNI</text>
+  </g>
+
+  <!-- Brand Typography -->
+  <g transform="translate(100, 22)">
+    <!-- Main Studio Name -->
+    <text x="0" y="30" font-family="'Cormorant Garamond', Georgia, serif" font-size="28" font-weight="700" fill="#171717" letter-spacing="3.5">
+      THE KATNI CREATION
+    </text>
+    
+    <!-- Subtitle / Tagline -->
+    <text x="1" y="48" font-family="'Plus Jakarta Sans', sans-serif" font-size="8.5" font-weight="600" fill="#8E8D88" letter-spacing="3">
+      CINEMATIC WEDDINGS &bull; FINE ART MONOGRAPHS
+    </text>
+  </g>
+</svg>

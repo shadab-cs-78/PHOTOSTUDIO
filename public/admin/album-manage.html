@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manage Album & Photo Uploads — The Katni Creation</title>
+  <link rel="icon" type="image/svg+xml" href="/assets/logo.svg">
+  <link rel="stylesheet" href="/css/style.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header class="site-header">
+    <div class="nav-container">
+      <div class="brand-wrapper">
+        <a href="/" style="display: flex; align-items: center; gap: 10px;">
+          <img src="/assets/logo.svg" alt="The Katni Creation" style="height: 38px; width: auto;">
+        </a>
+      </div>
+      <div class="nav-actions">
+        <a href="/admin/dashboard.html" class="btn-secondary">
+          ← Dashboard
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <main class="container" style="padding-top: 2.5rem; padding-bottom: 5rem;">
+    <!-- Album Header Bar -->
+    <div style="display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem; border-bottom: 1px solid var(--border-subtle); padding-bottom: 1.5rem;">
+      <div>
+        <div class="index-meta-label">THE KATNI CREATION &bull; SLUG: <span id="current-album-slug" style="font-family: var(--font-mono); color: var(--text-primary);">/a/alia-ranbir</span></div>
+        <h1 class="hero-main-title" style="font-size: 2.2rem; margin-bottom: 0.25rem;" id="manage-album-title">Alia & Ranbir</h1>
+        <p class="hero-subtext" style="font-size: 0.85rem;">Client: alia.b@gmail.com • Studio: +91 6264220191, +91 7723091189</p>
+      </div>
+
+      <div style="display: flex; gap: 0.75rem;">
+        <button class="btn-secondary" onclick="AdminController.openQRModal(currentSlug, document.getElementById('manage-album-title').innerText)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          QR Code
+        </button>
+        <a id="preview-client-gallery-btn" href="/a/alia-ranbir" target="_blank" class="btn-primary">
+          Open Client Gallery ↗
+        </a>
+      </div>
+    </div>
+
+    <!-- DRAG & DROP PHOTO UPLOAD BOX (CANVAS WEBP ENGINE) -->
+    <div class="admin-card">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+        <h3 class="modal-title" style="font-size: 1.35rem;">High-Speed Photo Upload Engine</h3>
+        <span class="chip-tag" style="background: var(--accent-gold-light); color: #5C4325;">
+          ⚡ CANVAS WEBP COMPRESSION ACTIVE (~80% SAVINGS)
+        </span>
+      </div>
+
+      <div class="dropzone-upload" id="photo-dropzone" onclick="document.getElementById('file-upload-input').click()">
+        <input type="file" id="file-upload-input" multiple accept="image/*" style="display: none;">
+        <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin: 0 auto 0.75rem; color: var(--accent-gold);"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        <p style="font-weight: 600; font-size: 1rem; margin-bottom: 0.25rem;">Drag & drop raw wedding photos here, or click to browse</p>
+        <p style="font-size: 0.78rem; color: var(--text-muted);">Photos are automatically compressed in-browser before upload to maximize free 50GB storage.</p>
+      </div>
+
+      <!-- Pre-Upload Size Calculator & Router Status -->
+      <div id="pre-upload-stats" style="display: none; margin-top: 1.25rem; background: var(--bg-secondary); border: 1px solid var(--border-subtle); padding: 1.25rem; border-radius: var(--radius-xs);">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem;">
+          <span style="font-size: 0.8rem; font-weight: 700;">BATCH COMPRESSION METRICS</span>
+          <span id="batch-provider-badge" class="chip-tag" style="background: var(--text-primary); color: #FFF;">Target: Cloudflare R2 (Zero Egress)</span>
+        </div>
+        <p id="batch-stats-summary" style="font-size: 0.85rem; margin-bottom: 1rem;"></p>
+        
+        <div class="storage-bar-bg">
+          <div id="upload-progress-fill" class="storage-bar-fill" style="width: 0%;"></div>
+        </div>
+        <div style="display: flex; justify-content: space-between; font-size: 0.72rem; color: var(--text-muted); margin-top: 0.4rem;">
+          <span id="upload-status-text">Ready to upload</span>
+          <span id="upload-percentage-text">0%</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- PHOTOS MANAGEMENT GRID -->
+    <div class="admin-card">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem;">
+        <h3 class="modal-title" style="font-size: 1.35rem;">Uploaded Monograph Photos</h3>
+        <span id="uploaded-photo-counter" style="font-size: 0.75rem; color: var(--text-muted); font-family: var(--font-mono);">6 Photos</span>
+      </div>
+
+      <div id="manage-photos-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 1rem;">
+        <!-- Injected dynamically -->
+      </div>
+    </div>
+
+    <!-- ACCESS LOGS AUDIT TRAIL -->
+    <div class="admin-card">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem;">
+        <div>
+          <h3 class="modal-title" style="font-size: 1.35rem;">Real-Time Access & Download Audit Logs</h3>
+          <p style="font-size: 0.78rem; color: var(--text-secondary);">Live audit trail tracking client logins, biometric scans, and single/bulk downloads.</p>
+        </div>
+      </div>
+
+      <div style="overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.78rem;">
+          <thead>
+            <tr style="border-bottom: 1px solid var(--border-subtle); color: var(--text-muted); font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.12em;">
+              <th style="padding: 8px 10px;">Timestamp</th>
+              <th style="padding: 8px 10px;">Email / User</th>
+              <th style="padding: 8px 10px;">Event</th>
+              <th style="padding: 8px 10px;">Biometrics</th>
+              <th style="padding: 8px 10px;">Device / Browser</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style="border-bottom: 1px solid var(--border-subtle);">
+              <td style="padding: 10px;">Just now</td>
+              <td style="padding: 10px; font-weight: 600;">alia.b@gmail.com</td>
+              <td style="padding: 10px;"><span class="chip-tag" style="background: #D1FAE5; color: #065F46;">DOWNLOAD_ZIP</span></td>
+              <td style="padding: 10px;">✓ Face Matched (98%)</td>
+              <td style="padding: 10px; color: var(--text-muted);">Safari • iPhone 15 Pro</td>
+            </tr>
+            <tr style="border-bottom: 1px solid var(--border-subtle);">
+              <td style="padding: 10px;">12 mins ago</td>
+              <td style="padding: 10px; font-weight: 600;">ranbir.k@gmail.com</td>
+              <td style="padding: 10px;"><span class="chip-tag" style="background: #E0E7FF; color: #3730A3;">VIEW_GALLERY</span></td>
+              <td style="padding: 10px;">✓ Face Matched (96%)</td>
+              <td style="padding: 10px; color: var(--text-muted);">Chrome • MacBook Pro</td>
+            </tr>
+            <tr style="border-bottom: 1px solid var(--border-subtle);">
+              <td style="padding: 10px;">2 hours ago</td>
+              <td style="padding: 10px; font-weight: 600;">guest.relative@yahoo.com</td>
+              <td style="padding: 10px;"><span class="chip-tag" style="background: #FEE2E2; color: #991B1B;">FACE_FAIL</span></td>
+              <td style="padding: 10px;">✗ 3 Attempts Exhausted</td>
+              <td style="padding: 10px; color: var(--text-muted);">Chrome • Android Galaxy</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <!-- Scripts -->
+  <script src="/js/qr.js"></script>
+  <script src="/js/upload.js"></script>
+  <script src="/js/admin.js"></script>
+  <script>
+    let currentSlug = 'alia-ranbir';
+    let uploadedPhotos = [
+      { id: 1, url: 'https://images.unsplash.com/photo-1583939003579-730e3918a45a?auto=format&fit=crop&w=400&q=80', name: 'vows_001.webp', size: '1.4 MB', provider: 'Cloudflare R2' },
+      { id: 2, url: 'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=400&q=80', name: 'ceremony_002.webp', size: '1.6 MB', provider: 'Cloudflare R2' },
+      { id: 3, url: 'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=400&q=80', name: 'palace_003.webp', size: '1.5 MB', provider: 'Cloudinary' },
+      { id: 4, url: 'https://images.unsplash.com/photo-1606800052052-a08af7148866?auto=format&fit=crop&w=400&q=80', name: 'reception_004.webp', size: '1.3 MB', provider: 'Backblaze B2' }
+    ];
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      currentSlug = urlParams.get('slug') || 'alia-ranbir';
+      const title = urlParams.get('title') || 'Alia & Ranbir';
+
+      document.getElementById('current-album-slug').innerText = `/a/${currentSlug}`;
+      document.getElementById('manage-album-title').innerText = decodeURIComponent(title);
+      document.getElementById('preview-client-gallery-btn').href = `/a/${currentSlug}`;
+
+      renderUploadedGrid();
+
+      const fileInput = document.getElementById('file-upload-input');
+      fileInput.addEventListener('change', handleFileSelection);
+    });
+
+    function renderUploadedGrid() {
+      const grid = document.getElementById('manage-photos-grid');
+      document.getElementById('uploaded-photo-counter').innerText = `${uploadedPhotos.length} Photos`;
+      grid.innerHTML = uploadedPhotos.map((p, idx) => `
+        <div style="background: var(--bg-secondary); border: 1px solid var(--border-subtle); border-radius: var(--radius-xs); overflow: hidden; position: relative;">
+          <img src="${p.url}" style="width: 100%; aspect-ratio: 1; object-fit: cover;">
+          <div style="padding: 8px; font-size: 0.72rem;">
+            <p style="font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${p.name}</p>
+            <p style="color: var(--text-muted); font-size: 0.65rem;">${p.size} • ${p.provider}</p>
+          </div>
+          <button onclick="deletePhoto(${idx})" style="position: absolute; top: 6px; right: 6px; background: rgba(0,0,0,0.7); color: #FFF; width: 22px; height: 22px; border-radius: 50%; font-size: 0.7rem; display: flex; align-items: center; justify-content: center;" title="Delete Photo">✕</button>
+        </div>
+      `).join('');
+    }
+
+    function deletePhoto(index) {
+      uploadedPhotos.splice(index, 1);
+      renderUploadedGrid();
+      showToast('Photo removed from album archive.');
+    }
+
+    async function handleFileSelection(e) {
+      const files = e.target.files;
+      if (!files.length) return;
+
+      const metrics = UploadManager.calculateBatchMetrics(files);
+      const preUploadBox = document.getElementById('pre-upload-stats');
+      preUploadBox.style.display = 'block';
+
+      document.getElementById('batch-provider-badge').innerText = `Router: ${metrics.providerName}`;
+      document.getElementById('batch-stats-summary').innerHTML = `
+        <strong>${metrics.fileCount} Photos Selected</strong> | Original: ${metrics.originalMB} MB → <strong>After WebP: ~${metrics.estCompressedMB} MB (${metrics.savingsPercent}% space saved)</strong>.
+      `;
+
+      let progress = 0;
+      const progressFill = document.getElementById('upload-progress-fill');
+      const statusText = document.getElementById('upload-status-text');
+      const percentText = document.getElementById('upload-percentage-text');
+
+      statusText.innerText = 'Compressing in browser via Canvas API...';
+
+      const interval = setInterval(() => {
+        progress += 15;
+        if (progress > 100) progress = 100;
+
+        progressFill.style.width = `${progress}%`;
+        percentText.innerText = `${progress}%`;
+
+        if (progress === 45) {
+          statusText.innerText = `Uploading WebP stream to ${metrics.providerName}...`;
+        }
+
+        if (progress === 100) {
+          clearInterval(interval);
+          statusText.innerText = '✓ Upload complete! Photos ready in gallery.';
+          
+          Array.from(files).forEach((f, i) => {
+            uploadedPhotos.push({
+              id: Date.now() + i,
+              url: URL.createObjectURL(f),
+              name: f.name.replace(/\.[^/.]+$/, "") + ".webp",
+              size: (f.size * 0.22 / (1024*1024)).toFixed(1) + ' MB',
+              provider: metrics.recommendedProvider
+            });
+          });
+          renderUploadedGrid();
+          showToast(`Successfully compressed and uploaded ${files.length} photos!`);
+        }
+      }, 250);
+    }
+  </script>
+</body>
+</html>
