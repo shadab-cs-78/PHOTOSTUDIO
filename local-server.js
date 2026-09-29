@@ -1,6 +1,6 @@
 /**
  * PHOTOVAULT - Local Zero-Dependency Development Server
- * Runs out of the box with `node local-server.js` (No external npm install required!)
+ * Runs out of the box with `node local-server.js`
  */
 
 const http = require('http');
@@ -28,7 +28,6 @@ const server = http.createServer((req, res) => {
   const parsedUrl = url.parse(req.url, true);
   let pathname = parsedUrl.pathname;
 
-  // Enable CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
@@ -45,15 +44,14 @@ const server = http.createServer((req, res) => {
       return res.end(JSON.stringify({
         total_albums: 6,
         total_photos: 2840,
-        storage: { total_quota_gb: 50.0, used_gb: 12.9, free_gb: 37.1 }
+        storage: { total_quota_gb: 46.0, used_gb: 6.5, free_gb: 39.5 }
       }));
     }
-    return res.end(JSON.stringify({ success: true, message: 'Local API OK' }));
+    return res.end(JSON.stringify({ success: true, message: 'Zero-Card API OK' }));
   }
 
   // Rewrite /a/:slug to /a/index.html?slug=:slug
   if (pathname.startsWith('/a/') && pathname !== '/a/' && pathname !== '/a/index.html') {
-    const slug = pathname.replace('/a/', '').split('/')[0];
     pathname = '/a/index.html';
   }
 
@@ -66,7 +64,6 @@ const server = http.createServer((req, res) => {
 
   fs.stat(filePath, (err, stats) => {
     if (err || !stats.isFile()) {
-      // Try appending .html
       if (fs.existsSync(filePath + '.html')) {
         filePath = filePath + '.html';
       } else {
@@ -91,7 +88,7 @@ const server = http.createServer((req, res) => {
 
 server.listen(PORT, () => {
   console.log(`\n=============================================================`);
-  console.log(`✨ PHOTOVAULT — Wedding Photo Delivery Portal running!`);
+  console.log(`✨ The Katni Creation — Photo Delivery Portal running!`);
   console.log(`🌐 Public Index:       http://localhost:${PORT}`);
   console.log(`📷 Client Gallery:     http://localhost:${PORT}/a/alia-ranbir`);
   console.log(`👑 Admin Dashboard:    http://localhost:${PORT}/admin/dashboard.html`);

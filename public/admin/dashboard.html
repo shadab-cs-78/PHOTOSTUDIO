@@ -46,63 +46,50 @@
       </div>
       <div>
         <span class="chip-tag" style="background: var(--accent-gold-light); color: #5C4325; font-size: 0.75rem; padding: 6px 12px;">
-          ● ZERO-COST INFRASTRUCTURE ACTIVE
+          ● 46GB ZERO-CARD FREE STORAGE ACTIVE
         </span>
       </div>
     </div>
 
-    <!-- STORAGE ALLOCATION CARDS (4 PROVIDERS) -->
-    <section class="storage-quota-row">
-      <!-- 1. Cloudflare R2 -->
+    <!-- STORAGE ALLOCATION CARDS (3 ZERO-CARD PROVIDERS) -->
+    <section class="storage-quota-row" style="grid-template-columns: repeat(3, 1fr);">
+      <!-- 1. Cloudinary -->
       <div class="storage-provider-card">
         <div class="storage-provider-header">
-          <span class="provider-name">1. Cloudflare R2</span>
-          <span style="font-size: 0.65rem; color: var(--accent-emerald); font-weight: 700;">PRIMARY</span>
+          <span class="provider-name">1. Cloudinary</span>
+          <span style="font-size: 0.65rem; color: var(--accent-emerald); font-weight: 700;">PRIMARY (25GB)</span>
         </div>
-        <div style="font-size: 1.15rem; font-family: var(--font-serif); font-weight: 600;">2.8 GB / 10 GB</div>
+        <div style="font-size: 1.15rem; font-family: var(--font-serif); font-weight: 600;">4.2 GB / 25 GB</div>
         <div class="storage-bar-bg">
-          <div class="storage-bar-fill" style="width: 28%;"></div>
+          <div class="storage-bar-fill" style="width: 17%;"></div>
         </div>
-        <div style="font-size: 0.68rem; color: var(--text-muted);">Zero egress charges • 7.2 GB Free</div>
+        <div style="font-size: 0.68rem; color: var(--text-muted);">Auto transformations • 20.8 GB Free • Zero Card</div>
       </div>
 
-      <!-- 2. Cloudinary -->
+      <!-- 2. ImageKit -->
       <div class="storage-provider-card">
         <div class="storage-provider-header">
-          <span class="provider-name">2. Cloudinary</span>
-          <span style="font-size: 0.65rem; color: var(--text-muted); font-weight: 700;">SECONDARY</span>
+          <span class="provider-name">2. ImageKit</span>
+          <span style="font-size: 0.65rem; color: var(--text-muted); font-weight: 700;">SECONDARY (20GB)</span>
         </div>
-        <div style="font-size: 1.15rem; font-family: var(--font-serif); font-weight: 600;">8.4 GB / 25 GB</div>
+        <div style="font-size: 1.15rem; font-family: var(--font-serif); font-weight: 600;">1.5 GB / 20 GB</div>
         <div class="storage-bar-bg">
-          <div class="storage-bar-fill" style="width: 33%;"></div>
+          <div class="storage-bar-fill" style="width: 8%;"></div>
         </div>
-        <div style="font-size: 0.68rem; color: var(--text-muted);">Auto transformations • 16.6 GB Free</div>
+        <div style="font-size: 0.68rem; color: var(--text-muted);">Fast Mumbai Indian CDN • 18.5 GB Free • Zero Card</div>
       </div>
 
-      <!-- 3. Backblaze B2 -->
+      <!-- 3. Supabase Storage -->
       <div class="storage-provider-card">
         <div class="storage-provider-header">
-          <span class="provider-name">3. Backblaze B2</span>
-          <span style="font-size: 0.65rem; color: var(--text-muted); font-weight: 700;">RESERVE</span>
+          <span class="provider-name">3. Supabase Storage</span>
+          <span style="font-size: 0.65rem; color: var(--text-muted); font-weight: 700;">INTEGRATED (1GB)</span>
         </div>
-        <div style="font-size: 1.15rem; font-family: var(--font-serif); font-weight: 600;">1.2 GB / 10 GB</div>
+        <div style="font-size: 1.15rem; font-family: var(--font-serif); font-weight: 600;">0.2 GB / 1.0 GB</div>
         <div class="storage-bar-bg">
-          <div class="storage-bar-fill" style="width: 12%;"></div>
+          <div class="storage-bar-fill" style="width: 20%;"></div>
         </div>
-        <div style="font-size: 0.68rem; color: var(--text-muted);">Cold reserve • 8.8 GB Free</div>
-      </div>
-
-      <!-- 4. Firebase -->
-      <div class="storage-provider-card">
-        <div class="storage-provider-header">
-          <span class="provider-name">4. Firebase</span>
-          <span style="font-size: 0.65rem; color: var(--text-muted); font-weight: 700;">OVERFLOW</span>
-        </div>
-        <div style="font-size: 1.15rem; font-family: var(--font-serif); font-weight: 600;">0.5 GB / 5 GB</div>
-        <div class="storage-bar-bg">
-          <div class="storage-bar-fill" style="width: 10%;"></div>
-        </div>
-        <div style="font-size: 0.68rem; color: var(--text-muted);">Emergency tier • 4.5 GB Free</div>
+        <div style="font-size: 0.68rem; color: var(--text-muted);">Built-in DB Storage Bucket • Zero Card</div>
       </div>
     </section>
 
@@ -180,7 +167,7 @@
       </div>
     </div>
 
-    <!-- 🛡️ REAL-TIME PHOTO DOWNLOAD & ACCESS SURVEILLANCE LOGS (ANTI-MISUSE TRACKING) -->
+    <!-- 🛡️ REAL-TIME PHOTO DOWNLOAD & ACCESS SURVEILLANCE LOGS -->
     <div class="admin-card">
       <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem;">
         <div>
@@ -221,7 +208,6 @@
       const tbody = document.getElementById('live-audit-table-body');
       const logs = JSON.parse(localStorage.getItem('photovault_access_logs') || '[]');
 
-      // Default mock entries if empty
       const defaultLogs = [
         { time: 'Just now', email: 'rahul.sharma@gmail.com', event: 'DOWNLOAD_SINGLE', photoName: 'vows_balcony_001.webp', device: 'iPhone 15 Pro (Safari)' },
         { time: '14 mins ago', email: 'priya.verma@gmail.com', event: 'DOWNLOAD_ZIP', photoName: 'All 6 Photos (ZIP Archive)', device: 'MacBook Air (Chrome)' },

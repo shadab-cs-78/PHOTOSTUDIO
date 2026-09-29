@@ -1,5 +1,7 @@
 /**
  * PHOTOVAULT - Universal Safe Configuration Parser (100% Zero-Card Free Storages)
+ * Clean 3-Tier Storage: Cloudinary (25GB) + ImageKit (20GB) + Supabase (1GB)
+ * NO Firebase, NO Cloudflare R2, NO Debit/Credit Card Required!
  */
 
 export function getAppConfig() {
@@ -31,19 +33,6 @@ export function getAppConfig() {
       publicKey: config.imagekit?.publicKey || process.env.IMAGEKIT_PUBLIC_KEY || '',
       privateKey: config.imagekit?.privateKey || process.env.IMAGEKIT_PRIVATE_KEY || '',
       urlEndpoint: config.imagekit?.urlEndpoint || process.env.IMAGEKIT_URL_ENDPOINT || ''
-    },
-    b2: {
-      keyId: config.b2?.keyId || process.env.BACKBLAZE_KEY_ID || '',
-      appKey: config.b2?.appKey || process.env.BACKBLAZE_APPLICATION_KEY || '',
-      bucket: config.b2?.bucket || process.env.BACKBLAZE_BUCKET_NAME || 'photovault-reserve',
-      endpoint: config.b2?.endpoint || process.env.BACKBLAZE_ENDPOINT || 'https://s3.us-west-004.backblazeb2.com'
-    },
-    firebase: {
-      bucket: config.firebase?.bucket || process.env.FIREBASE_STORAGE_BUCKET || '',
-      privateKey: config.firebase?.privateKey || process.env.FIREBASE_PRIVATE_KEY || ''
-    },
-    resend: {
-      apiKey: config.resend?.apiKey || config.resend || process.env.RESEND_API_KEY || ''
     }
   };
 }

@@ -1,6 +1,7 @@
 {
   "version": 2,
   "rewrites": [
+    { "source": "/api/(.*)", "destination": "/api/index.js" },
     { "source": "/a/:slug", "destination": "/a/index.html?slug=:slug" }
   ],
   "crons": [
