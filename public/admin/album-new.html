@@ -30,7 +30,7 @@
     <div class="index-meta-label">THE KATNI CREATION STUDIO &bull; STEP 1 OF 2</div>
     <h1 class="hero-main-title" style="font-size: 2.4rem; margin-bottom: 0.5rem;">New Client Monograph</h1>
     <p class="hero-subtext" style="margin-bottom: 2.5rem;">
-      Create the album record. A unique QR code & 4-Digit Passcode are generated <strong>instantly</strong>, ready for wedding invite cards and client handoff.
+      Create the album folder. A unique QR code & 4-Digit Passcode are generated <strong>instantly</strong> in the database.
     </p>
 
     <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 2.5rem; align-items: flex-start;">
@@ -42,15 +42,15 @@
         </div>
 
         <div class="form-group">
-          <label class="form-label">Client Email / Phone</label>
-          <input type="text" id="client-email" class="form-input" placeholder="e.g. 9876543210 ya client@gmail.com" required>
+          <label class="form-label">Client Email</label>
+          <input type="email" id="client-email" class="form-input" placeholder="e.g. client@gmail.com" required>
         </div>
 
         <div class="form-group">
-          <label class="form-label">4-Digit Wedding PIN / Passcode (For Easy Guest Access)</label>
+          <label class="form-label">4-Digit Guest PIN / Passcode</label>
           <input type="text" id="album-pin" class="form-input" maxlength="4" value="2026" required oninput="updateSlugPreview()">
           <p style="font-size: 0.72rem; color: var(--text-muted); margin-top: 4px;">
-            Ye PIN wedding card pe print hoga taaki guests bina face scan ke turant photos dekh sakein.
+            Ye PIN wedding card pe print hoga taaki guests bina kisi jhanjhat ke photos khol sakein.
           </p>
         </div>
 
@@ -77,11 +77,11 @@
             <option value="30">30 Days (Standard Free Recycle Cycle)</option>
             <option value="15">15 Days (Rapid Turnover)</option>
             <option value="90">90 Days (Extended Archive)</option>
-            <option value="permanent">No Expiry (Permanent Vault)</option>
+            <option value="365">1 Year Vault</option>
           </select>
         </div>
 
-        <button type="submit" class="btn-primary" style="width: 100%; justify-content: center; padding: 12px; margin-top: 1.5rem;">
+        <button type="submit" id="create-btn" class="btn-primary" style="width: 100%; justify-content: center; padding: 12px; margin-top: 1.5rem;">
           Create Album & Continue to Upload →
         </button>
       </form>
@@ -119,15 +119,17 @@
   <script src="/js/qr.js"></script>
   <script src="/js/admin.js"></script>
   <script>
+    let currentPreviewSlug = 'new-shoot';
+
     function updateSlugPreview() {
       const title = document.getElementById('album-title').value.trim() || 'New Shoot';
       const pin = document.getElementById('album-pin').value.trim() || '2026';
-      const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'new-shoot';
+      currentPreviewSlug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'new-shoot';
       
       document.getElementById('qr-preview-title').innerText = title;
       document.getElementById('display-pin-badge').innerText = pin;
       
-      const fullUrl = `${window.location.origin}/a/${slug}`;
+      const fullUrl = `${window.location.origin}/a/${currentPreviewSlug}`;
       document.getElementById('slug-url-display').innerText = fullUrl;
       QRUtil.render('new-album-qr', fullUrl, 180);
     }
@@ -136,13 +138,62 @@
       updateSlugPreview();
     });
 
-    function handleCreateAlbum() {
+    async function handleCreateAlbum() {
       const title = document.getElementById('album-title').value.trim();
-      const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-      showToast('Album created! Redirecting to photo upload manager...');
-      setTimeout(() => {
-        window.location.href = `/admin/album-manage.html?slug=${slug}&title=${encodeURIComponent(title)}`;
-      }, 1000);
+      const clientEmail = document.getElementById('client-email').value.trim();
+      const location = document.getElementById('album-location').value.trim();
+      const category = document.getElementById('album-category').value;
+      const guestPin = document.getElementById('album-pin').value.trim() || '2026';
+      const expiryDays = document.getElementById('album-expiry').value;
+
+      const btn = document.getElementById('create-btn');
+      btn.innerText = 'Creating Album in Database...';
+      btn.disabled = true;
+
+      try {
+        const resp = await fetch('/api/albums', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: title,
+            client_email: clientEmail,
+            location: location,
+            category: category,
+            guest_pin: guestPin,
+            expiry_days: expiryDays
+          })
+        });
+        const data = await resp.json();
+
+        if (data.success && data.album) {
+          // Save in localStorage for immediate local sync
+          const localAlbums = JSON.parse(localStorage.getItem('photovault_local_albums') || '[]');
+          localAlbums.unshift(data.album);
+          localStorage.setItem('photovault_local_albums', JSON.stringify(localAlbums));
+
+          showToast('✓ Album Created in Database! Redirecting to Photo Upload...');
+          setTimeout(() => {
+            window.location.href = `/admin/album-manage.html?slug=${data.album.slug}&title=${encodeURIComponent(data.album.title)}`;
+          }, 800);
+        } else {
+          alert('Error creating album: ' + (data.error || 'Server error'));
+          btn.innerText = 'Create Album & Continue to Upload →';
+          btn.disabled = false;
+        }
+      } catch (err) {
+        console.error('Create album failed:', err);
+        // Offline fallback
+        const slug = currentPreviewSlug + '-' + Math.random().toString(36).substring(2, 6);
+        const fallbackAlbum = { slug, title, client_email: clientEmail, location, category, guest_pin: guestPin, status: 'ready', expires_at: new Date(Date.now() + 30*86400000).toISOString() };
+        const localAlbums = JSON.parse(localStorage.getItem('photovault_local_albums') || '[]');
+        localAlbums.unshift(fallbackAlbum);
+        localStorage.setItem('photovault_local_albums', JSON.stringify(localAlbums));
+
+        showToast('✓ Album Created locally! Redirecting...');
+        setTimeout(() => {
+          window.location.href = `/admin/album-manage.html?slug=${slug}&title=${encodeURIComponent(title)}`;
+        }, 800);
+      }
     }
   </script>
 </body>

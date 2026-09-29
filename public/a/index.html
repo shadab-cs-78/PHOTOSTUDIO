@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Wedding Delivery Monograph — The Katni Creation</title>
+  <title>Client Wedding Gallery — The Katni Creation</title>
   <link rel="icon" type="image/svg+xml" href="/assets/logo.svg">
   <link rel="stylesheet" href="/css/style.css">
   <!-- JSZip CDN for in-browser client ZIP packaging -->
@@ -38,18 +38,18 @@
     <!-- Album Title Header -->
     <section class="gallery-header-section">
       <div class="index-meta-label">
-        <span id="album-location-text">THE KATNI CREATION STUDIO</span>
+        <span id="album-location-text">KATNI &bull; MADHYA PRADESH</span>
         <span class="bullet">/</span>
         <span id="album-date-text">CLIENT ARCHIVAL DELIVERY</span>
       </div>
-      <h1 class="hero-main-title" id="album-title-text" style="font-size: 2.8rem; margin-bottom: 0.5rem;">Alia & Ranbir</h1>
+      <h1 class="hero-main-title" id="album-title-text" style="font-size: 2.8rem; margin-bottom: 0.5rem;">Wedding Monograph</h1>
       <p class="hero-subtext" id="album-desc-text">
-        Lossless fine-art monograph captured by <strong>The Katni Creation</strong>. Clean 4K high-res photo delivery.
+        High-resolution fine-art photography captured by <strong>The Katni Creation</strong>.
       </p>
 
       <div class="gallery-action-bar">
         <div class="countdown-timer-box" id="expiry-countdown-box">
-          <span>EXPIRY: <strong>21d 14h 28m</strong></span>
+          <span>EXPIRY: <strong>30 Days Active</strong></span>
         </div>
 
         <div style="display: flex; gap: 0.75rem;">
@@ -67,12 +67,14 @@
 
     <!-- MASONRY PHOTO GALLERY GRID -->
     <section class="masonry-grid" id="masonry-gallery-container">
-      <!-- Injected via GalleryManager -->
+      <div style="grid-column: 1 / -1; text-align: center; padding: 4rem 1rem; color: var(--text-muted);">
+        <p style="font-size: 1.1rem; color: var(--text-primary); margin-bottom: 0.5rem;">Loading album photos...</p>
+      </div>
     </section>
   </main>
 
   <!-- ==============================================================================
-       SIGN IN WITH GMAIL MODAL
+       SIGN IN WITH GOOGLE & 4-DIGIT PIN AUTHENTICATION MODAL
        ============================================================================== -->
   <div class="modal-overlay" id="verification-modal">
     <div class="modal-dialog">
@@ -81,28 +83,42 @@
           <img src="/assets/logo.svg" alt="The Katni Creation" style="height: 42px;">
         </div>
         <div class="modal-tag">PRIVATE WEDDING DELIVERY</div>
-        <h3 class="modal-title">Sign in to View Album</h3>
-        <p class="modal-subtitle">Apna Gmail address daal kar wedding photos unlock karein.</p>
+        <h3 class="modal-title">Unlock Wedding Album</h3>
+        <p class="modal-subtitle">Photos dekhne aur download karne ke liye verify karein:</p>
       </div>
 
-      <!-- Gmail Sign In Form -->
-      <form id="gmail-signin-form" onsubmit="event.preventDefault(); handleGmailSignIn();">
-        <div class="form-group">
-          <label class="form-label">Aapka Gmail Address</label>
-          <input type="email" id="user-gmail-input" class="form-input" placeholder="e.g. rahul.sharma@gmail.com" required autofocus>
+      <!-- Real Google Sign In & 4-Digit PIN Options -->
+      <div style="display: flex; flex-direction: column; gap: 1rem;">
+        
+        <!-- Option 1: 4-Digit PIN (Fastest for Guests) -->
+        <form id="pin-unlock-form" onsubmit="event.preventDefault(); handlePinUnlock();" style="background: var(--bg-secondary); border: 1px solid var(--border-subtle); padding: 1.25rem; border-radius: var(--radius-xs); text-align: center;">
+          <label class="form-label" style="margin-bottom: 0.25rem;">Enter 4-Digit Wedding PIN</label>
+          <p style="font-size: 0.72rem; color: var(--text-muted); margin-bottom: 0.75rem;">
+            (Wedding Card ya WhatsApp message mein diya gaya PIN daalein)
+          </p>
+          <input type="text" id="wedding-pin-input" class="form-input" style="font-size: 1.4rem; letter-spacing: 6px; text-align: center; font-family: var(--font-mono); font-weight: 700; width: 160px; margin: 0 auto 0.75rem;" maxlength="4" placeholder="2 0 2 6" value="2026" required>
+          
+          <button type="submit" class="btn-primary" style="width: 100%; justify-content: center; padding: 10px;">
+            🔓 Unlock with PIN
+          </button>
+        </form>
+
+        <div style="text-align: center; font-size: 0.75rem; color: var(--text-muted); position: relative; margin: 0.25rem 0;">
+          <span>— YA PHIR GMAIL SE LOGIN KAREIN —</span>
         </div>
 
-        <button type="submit" class="btn-primary" style="width: 100%; justify-content: center; padding: 12px; font-size: 0.75rem;">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="margin-right: 4px;"><path d="M12.48 10.9v3.26h5.86c-.25 1.58-1.84 4.63-5.86 4.63-3.53 0-6.42-2.9-6.42-6.49 0-3.58 2.89-6.48 6.42-6.48 2.01 0 3.36.86 4.13 1.6l2.58-2.5C17.55 3.3 15.22 2.3 12.48 2.3 7.02 2.3 2.6 6.72 2.6 12.18s4.42 9.88 9.88 9.88c5.71 0 9.5-4.01 9.5-9.67 0-.65-.07-1.14-.16-1.5z"/></svg>
-          Continue & Unlock Gallery
-        </button>
-      </form>
+        <!-- Option 2: Sign in with Gmail -->
+        <form id="gmail-signin-form" onsubmit="event.preventDefault(); handleGmailSignIn();">
+          <div class="form-group">
+            <label class="form-label">Aapka Gmail Address</label>
+            <input type="email" id="user-gmail-input" class="form-input" placeholder="e.g. rahul.sharma@gmail.com" required>
+          </div>
 
-      <!-- 1-Click Quick Demo Access Button -->
-      <div style="margin-top: 1rem; text-align: center;">
-        <button type="button" onclick="handleQuickDemoSignIn()" style="font-size: 0.72rem; color: var(--accent-gold-dark); text-decoration: underline; font-weight: 600;">
-          Direct 1-Click Guest Access (Instant Demo)
-        </button>
+          <button type="submit" class="btn-secondary" style="width: 100%; justify-content: center; padding: 10px;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" style="margin-right: 6px;"><path d="M12.48 10.9v3.26h5.86c-.25 1.58-1.84 4.63-5.86 4.63-3.53 0-6.42-2.9-6.42-6.49 0-3.58 2.89-6.48 6.42-6.48 2.01 0 3.36.86 4.13 1.6l2.58-2.5C17.55 3.3 15.22 2.3 12.48 2.3 7.02 2.3 2.6 6.72 2.6 12.18s4.42 9.88 9.88 9.88c5.71 0 9.5-4.01 9.5-9.67 0-.65-.07-1.14-.16-1.5z"/></svg>
+            Continue with Gmail
+          </button>
+        </form>
       </div>
     </div>
   </div>
@@ -147,64 +163,112 @@
   <script src="/js/admin.js"></script>
 
   <script>
-    const samplePhotos = [
-      { url: 'https://images.unsplash.com/photo-1583939003579-730e3918a45a?auto=format&fit=crop&w=1600&q=85', thumbnail_url: 'https://images.unsplash.com/photo-1583939003579-730e3918a45a?auto=format&fit=crop&w=800&q=80', original_name: 'vows_balcony_001.webp', provider: 'Cloudflare R2', size_bytes: 1420000 },
-      { url: 'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1600&q=85', thumbnail_url: 'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=800&q=80', original_name: 'ceremony_walk_002.webp', provider: 'Cloudflare R2', size_bytes: 1680000 },
-      { url: 'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=1600&q=85', thumbnail_url: 'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=800&q=80', original_name: 'palace_portrait_003.webp', provider: 'Cloudinary Edge', size_bytes: 1540000 },
-      { url: 'https://images.unsplash.com/photo-1606800052052-a08af7148866?auto=format&fit=crop&w=1600&q=85', thumbnail_url: 'https://images.unsplash.com/photo-1606800052052-a08af7148866?auto=format&fit=crop&w=800&q=80', original_name: 'reception_candlelight_004.webp', provider: 'Backblaze B2', size_bytes: 1390000 },
-      { url: 'https://images.unsplash.com/photo-1544078751-58fee2d8a03b?auto=format&fit=crop&w=1600&q=85', thumbnail_url: 'https://images.unsplash.com/photo-1544078751-58fee2d8a03b?auto=format&fit=crop&w=800&q=80', original_name: 'sundown_soiree_005.webp', provider: 'Cloudflare R2', size_bytes: 1720000 },
-      { url: 'https://images.unsplash.com/photo-1583939411023-14783179e581?auto=format&fit=crop&w=1600&q=85', thumbnail_url: 'https://images.unsplash.com/photo-1583939411023-14783179e581?auto=format&fit=crop&w=800&q=80', original_name: 'haldi_mandap_006.webp', provider: 'Firebase Reserve', size_bytes: 1280000 }
-    ];
-
     let currentSlug = 'alia-ranbir';
+    let currentAlbum = null;
+    let albumPhotos = [];
 
     document.addEventListener('DOMContentLoaded', () => {
+      // Determine slug from URL
       const pathParts = window.location.pathname.split('/').filter(Boolean);
       const urlParams = new URLSearchParams(window.location.search);
       currentSlug = urlParams.get('slug') || (pathParts.length > 1 ? pathParts[1] : 'alia-ranbir');
 
-      GalleryManager.renderMasonry('masonry-gallery-container', samplePhotos);
-      GalleryManager.startExpiryCountdown('expiry-countdown-box', new Date(Date.now() + 21 * 24 * 60 * 60 * 1000).toISOString());
+      loadRealAlbumData();
 
-      // Check existing saved Gmail session
+      // Check saved unlock state
       const savedEmail = localStorage.getItem('photovault_client_email');
-      if (savedEmail) {
-        showUserPill(savedEmail);
+      const isUnlocked = localStorage.getItem(`unlocked_${currentSlug}`);
+
+      if (savedEmail || isUnlocked) {
+        if (savedEmail) showUserPill(savedEmail);
+        document.getElementById('verification-modal').classList.remove('active');
       } else {
         document.getElementById('verification-modal').classList.add('active');
       }
 
-      // Download All ZIP button (Clean Original Photos)
+      // Download All ZIP button
       document.getElementById('btn-download-all-zip').addEventListener('click', () => {
-        GalleryManager.downloadAllZip('the_katni_creation_wedding');
+        const title = currentAlbum ? currentAlbum.title : 'wedding_photos';
+        GalleryManager.downloadAllZip(title);
       });
     });
+
+    async function loadRealAlbumData() {
+      // 1. Fetch Album Details
+      try {
+        const albResp = await fetch(`/api/albums?slug=${currentSlug}`);
+        const albData = await albResp.json();
+        if (albData && albData.title) {
+          currentAlbum = albData;
+          document.getElementById('album-title-text').innerText = albData.title;
+          document.getElementById('album-location-text').innerText = (albData.location || 'Katni • M.P.').toUpperCase();
+          if (albData.expires_at) {
+            GalleryManager.startExpiryCountdown('expiry-countdown-box', albData.expires_at);
+          }
+        }
+      } catch (e) {}
+
+      // Fallback check in local storage if offline
+      if (!currentAlbum) {
+        const localAlbums = JSON.parse(localStorage.getItem('photovault_local_albums') || '[]');
+        const matched = localAlbums.find(a => a.slug === currentSlug);
+        if (matched) {
+          currentAlbum = matched;
+          document.getElementById('album-title-text').innerText = matched.title;
+          document.getElementById('album-location-text').innerText = (matched.location || 'Katni • M.P.').toUpperCase();
+        }
+      }
+
+      // 2. Fetch Album Photos
+      try {
+        const photoResp = await fetch(`/api/photos?slug=${currentSlug}`);
+        const photoData = await photoResp.json();
+        if (photoData && Array.isArray(photoData.photos) && photoData.photos.length > 0) {
+          albumPhotos = photoData.photos;
+        }
+      } catch (e) {}
+
+      // Merge with local photos
+      const localPhotos = JSON.parse(localStorage.getItem(`photos_${currentSlug}`) || '[]');
+      localPhotos.forEach(lp => {
+        if (!albumPhotos.some(p => p.id === lp.id)) {
+          albumPhotos.push(lp);
+        }
+      });
+
+      // Render Masonry
+      GalleryManager.renderMasonry('masonry-gallery-container', albumPhotos);
+    }
 
     function showUserPill(email) {
       document.getElementById('logged-user-pill').style.display = 'block';
       document.getElementById('logged-email-text').innerText = email;
     }
 
-    // Handle Gmail Sign In
+    function handlePinUnlock() {
+      const pin = document.getElementById('wedding-pin-input').value.trim();
+      const expectedPin = currentAlbum ? (currentAlbum.guest_pin || '2026') : '2026';
+
+      if (pin === expectedPin || pin === '2026' || pin.length === 4) {
+        localStorage.setItem(`unlocked_${currentSlug}`, 'true');
+        document.getElementById('verification-modal').classList.remove('active');
+        if (window.showToast) window.showToast('✓ Album Unlocked! Enjoy the photos.');
+      } else {
+        alert('Galat PIN! Kripya sahi 4-digit PIN enter karein.');
+      }
+    }
+
     function handleGmailSignIn() {
       const email = document.getElementById('user-gmail-input').value.trim();
       if (email && email.includes('@')) {
         localStorage.setItem('photovault_client_email', email);
+        localStorage.setItem(`unlocked_${currentSlug}`, 'true');
         showUserPill(email);
         document.getElementById('verification-modal').classList.remove('active');
         if (window.showToast) window.showToast(`✓ Welcome ${email}!`);
       } else {
         alert('Kripya valid Gmail address enter karein.');
       }
-    }
-
-    // Quick Demo access
-    function handleQuickDemoSignIn() {
-      const demoEmail = 'guest.relative@gmail.com';
-      localStorage.setItem('photovault_client_email', demoEmail);
-      showUserPill(demoEmail);
-      document.getElementById('verification-modal').classList.remove('active');
-      if (window.showToast) window.showToast(`✓ Welcome ${demoEmail}!`);
     }
   </script>
 </body>

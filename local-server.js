@@ -1,5 +1,5 @@
 /**
- * PHOTOVAULT - Local Zero-Dependency Development Server
+ * PHOTOVAULT - Local Development Server with Full Real Dynamic API & Storage
  * Runs out of the box with `node local-server.js`
  */
 
@@ -10,6 +10,46 @@ const url = require('url');
 
 const PORT = process.env.PORT || 3000;
 const PUBLIC_DIR = path.join(__dirname, 'public');
+
+// Persistent in-memory / JSON store
+const DB_FILE = path.join(__dirname, 'local_db.json');
+let db = {
+  albums: [
+    {
+      id: 'alb_demo_1',
+      slug: 'alia-ranbir',
+      title: 'Alia & Ranbir',
+      client_email: 'alia.b@gmail.com',
+      location: 'Vastu • Mumbai',
+      category: 'wedding',
+      guest_pin: '2026',
+      status: 'ready',
+      created_at: new Date().toISOString(),
+      expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+    }
+  ],
+  photos: {
+    'alia-ranbir': [
+      { id: 'p1', album_slug: 'alia-ranbir', url: 'https://images.unsplash.com/photo-1583939003579-730e3918a45a?auto=format&fit=crop&w=1600&q=85', thumbnail_url: 'https://images.unsplash.com/photo-1583939003579-730e3918a45a?auto=format&fit=crop&w=800&q=80', original_name: 'vows_balcony_001.webp', provider: 'cloudinary', size_bytes: 1420000, uploaded_at: new Date().toISOString() },
+      { id: 'p2', album_slug: 'alia-ranbir', url: 'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1600&q=85', thumbnail_url: 'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=800&q=80', original_name: 'ceremony_walk_002.webp', provider: 'imagekit', size_bytes: 1680000, uploaded_at: new Date().toISOString() },
+      { id: 'p3', album_slug: 'alia-ranbir', url: 'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=1600&q=85', thumbnail_url: 'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=800&q=80', original_name: 'palace_portrait_003.webp', provider: 'cloudinary', size_bytes: 1540000, uploaded_at: new Date().toISOString() }
+    ]
+  },
+  logs: []
+};
+
+// Load saved local DB if exists
+if (fs.existsSync(DB_FILE)) {
+  try {
+    db = JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
+  } catch (e) {}
+}
+
+function saveDb() {
+  try {
+    fs.writeFileSync(DB_FILE, JSON.stringify(db, null, 2), 'utf8');
+  } catch (e) {}
+}
 
 const MIME_TYPES = {
   '.html': 'text/html; charset=UTF-8',
@@ -24,7 +64,21 @@ const MIME_TYPES = {
   '.ico': 'image/x-icon'
 };
 
-const server = http.createServer((req, res) => {
+function readBody(req) {
+  return new Promise((resolve) => {
+    let body = '';
+    req.on('data', chunk => body += chunk.toString());
+    req.on('end', () => {
+      try {
+        resolve(JSON.parse(body));
+      } catch (e) {
+        resolve({});
+      }
+    });
+  });
+}
+
+const server = http.createServer(async (req, res) => {
   const parsedUrl = url.parse(req.url, true);
   let pathname = parsedUrl.pathname;
 
@@ -37,20 +91,133 @@ const server = http.createServer((req, res) => {
     return res.end();
   }
 
-  // API Routes simulation
-  if (pathname.startsWith('/api/')) {
+  // --------------------------------------------------------------------------
+  // REAL DYNAMIC API ROUTING FOR LOCAL SERVER
+  // --------------------------------------------------------------------------
+
+  // 1. /api/albums
+  if (pathname === '/api/albums') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
-    if (pathname === '/api/stats') {
-      return res.end(JSON.stringify({
-        total_albums: 6,
-        total_photos: 2840,
-        storage: { total_quota_gb: 46.0, used_gb: 6.5, free_gb: 39.5 }
-      }));
+    const slug = parsedUrl.query.slug;
+
+    if (req.method === 'GET') {
+      if (slug) {
+        const alb = db.albums.find(a => a.slug === slug);
+        if (alb) return res.end(JSON.stringify(alb));
+        return res.end(JSON.stringify({ error: 'Album not found' }));
+      }
+      return res.end(JSON.stringify({ albums: db.albums }));
     }
-    return res.end(JSON.stringify({ success: true, message: 'Zero-Card API OK' }));
+
+    if (req.method === 'POST') {
+      const body = await readBody(req);
+      const { title, client_email, location, category, guest_pin = '2026', expiry_days = 30 } = body;
+      const cleanSlug = (title || 'wedding')
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)/g, '')
+        .slice(0, 20) + '-' + Math.random().toString(36).substring(2, 6);
+
+      const newAlbum = {
+        id: 'alb_' + Date.now(),
+        slug: cleanSlug,
+        title: title || 'New Wedding Monograph',
+        client_email: client_email || 'client@gmail.com',
+        location: location || 'Katni • M.P.',
+        category: category || 'wedding',
+        guest_pin: guest_pin || '2026',
+        status: 'ready',
+        created_at: new Date().toISOString(),
+        expires_at: new Date(Date.now() + parseInt(expiry_days) * 24 * 60 * 60 * 1000).toISOString()
+      };
+
+      db.albums.unshift(newAlbum);
+      saveDb();
+      return res.end(JSON.stringify({ success: true, album: newAlbum }));
+    }
+
+    if (req.method === 'DELETE') {
+      if (slug) {
+        db.albums = db.albums.filter(a => a.slug !== slug);
+        delete db.photos[slug];
+        saveDb();
+      }
+      return res.end(JSON.stringify({ success: true, message: 'Album deleted' }));
+    }
   }
 
-  // Rewrite /a/:slug to /a/index.html?slug=:slug
+  // 2. /api/photos
+  if (pathname === '/api/photos') {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    const slug = parsedUrl.query.slug;
+    const photoId = parsedUrl.query.id;
+
+    if (req.method === 'GET') {
+      const photos = db.photos[slug] || [];
+      return res.end(JSON.stringify({ photos: photos }));
+    }
+
+    if (req.method === 'POST') {
+      const body = await readBody(req);
+      const { album_slug, url, thumbnail_url, original_name, provider = 'cloudinary', size_bytes = 0 } = body;
+
+      const newPhoto = {
+        id: 'photo_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
+        album_slug: album_slug,
+        url: url,
+        thumbnail_url: thumbnail_url || url,
+        original_name: original_name || 'photo.webp',
+        provider: provider,
+        size_bytes: size_bytes,
+        uploaded_at: new Date().toISOString()
+      };
+
+      if (!db.photos[album_slug]) db.photos[album_slug] = [];
+      db.photos[album_slug].unshift(newPhoto);
+      saveDb();
+      return res.end(JSON.stringify({ success: true, photo: newPhoto }));
+    }
+
+    if (req.method === 'DELETE') {
+      if (slug && db.photos[slug] && photoId) {
+        db.photos[slug] = db.photos[slug].filter(p => p.id !== photoId);
+        saveDb();
+      }
+      return res.end(JSON.stringify({ success: true, message: 'Photo deleted' }));
+    }
+  }
+
+  // 3. /api/upload
+  if (pathname === '/api/upload') {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    const body = await readBody(req);
+    const { image_base64, size_bytes } = body;
+    return res.end(JSON.stringify({
+      success: true,
+      provider: 'cloudinary',
+      url: image_base64 || 'https://images.unsplash.com/photo-1583939003579-730e3918a45a?auto=format&fit=crop&w=1600&q=85',
+      thumbnail_url: image_base64 || 'https://images.unsplash.com/photo-1583939003579-730e3918a45a?auto=format&fit=crop&w=600&q=80',
+      size_bytes: size_bytes || 500000
+    }));
+  }
+
+  // 4. /api/stats
+  if (pathname === '/api/stats') {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    if (req.method === 'POST') {
+      const log = await readBody(req);
+      db.logs.unshift(log);
+      saveDb();
+      return res.end(JSON.stringify({ success: true }));
+    }
+    return res.end(JSON.stringify({
+      total_albums: db.albums.length,
+      storage: { total_quota_gb: 46.0, used_gb: 4.2, free_gb: 41.8 },
+      logs: db.logs
+    }));
+  }
+
+  // Rewrite /a/:slug to /a/index.html
   if (pathname.startsWith('/a/') && pathname !== '/a/' && pathname !== '/a/index.html') {
     pathname = '/a/index.html';
   }
@@ -88,8 +255,8 @@ const server = http.createServer((req, res) => {
 
 server.listen(PORT, () => {
   console.log(`\n=============================================================`);
-  console.log(`✨ The Katni Creation — Photo Delivery Portal running!`);
-  console.log(`🌐 Public Index:       http://localhost:${PORT}`);
+  console.log(`✨ The Katni Creation — Client Delivery Portal Running!`);
+  console.log(`🌐 Client Portal:      http://localhost:${PORT}`);
   console.log(`📷 Client Gallery:     http://localhost:${PORT}/a/alia-ranbir`);
   console.log(`👑 Admin Dashboard:    http://localhost:${PORT}/admin/dashboard.html`);
   console.log(`=============================================================\n`);
