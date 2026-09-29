@@ -76,15 +76,11 @@
           <label class="form-label">Storage Expiry Cycle</label>
           <select id="album-expiry" class="form-select">
             <option value="3">3 Days (Fast Client Handoff)</option>
-            <option value="7">7 Days (1-Week Standard Access)</option>
+            <option value="7" selected>7 Days (1-Week Standard Access)</option>
             <option value="15">15 Days (Fortnight Archival)</option>
-            <option value="30" selected>30 Days (1 Month Standard)</option>
-            <option value="90">90 Days (Quarterly Season)</option>
-            <option value="365">1 Year Extended Vault</option>
-            <option value="0">Permanent (No Expiry)</option>
           </select>
           <p style="font-size: 0.72rem; color: var(--text-muted); margin-top: 4px;">
-            Set when the client download portal expires (e.g. 3 days, 7 days, 15 days, etc.).
+            Set when the client download portal expires (3 days, 7 days, or 15 days).
           </p>
         </div>
 
