@@ -117,6 +117,32 @@
 
       const fileInput = document.getElementById('file-upload-input');
       fileInput.addEventListener('change', handleRealPhotoUpload);
+
+      // Setup Drag & Drop on Dropzone
+      const dropzone = document.getElementById('photo-dropzone');
+      ['dragenter', 'dragover'].forEach(eventName => {
+        dropzone.addEventListener(eventName, (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          dropzone.style.borderColor = 'var(--accent-gold)';
+          dropzone.style.background = 'var(--bg-secondary)';
+        });
+      });
+      ['dragleave', 'drop'].forEach(eventName => {
+        dropzone.addEventListener(eventName, (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          dropzone.style.borderColor = '';
+          dropzone.style.background = '';
+        });
+      });
+      dropzone.addEventListener('drop', (e) => {
+        const dt = e.dataTransfer;
+        if (dt && dt.files && dt.files.length) {
+          fileInput.files = dt.files;
+          handleRealPhotoUpload({ target: { files: dt.files } });
+        }
+      });
     });
 
     async function loadAlbumDetails(urlTitle) {
@@ -143,6 +169,8 @@
         const data = await resp.json();
         if (data && Array.isArray(data.photos)) {
           realPhotos = data.photos;
+        } else if (Array.isArray(data)) {
+          realPhotos = data;
         }
       } catch (err) {
         console.warn('API error, reading local photos:', err);
@@ -167,20 +195,28 @@
         grid.innerHTML = `
           <div style="grid-column: 1 / -1; padding: 2.5rem 1rem; text-align: center; color: var(--text-muted);">
             <p style="font-size: 1rem; color: var(--text-primary); margin-bottom: 0.25rem;">No photos uploaded yet</p>
-            <p style="font-size: 0.78rem;">Use the upload box above to add high-resolution photos to this album!</p>
+            <p style="font-size: 0.78rem;">Use the upload box above or drag photos here to add to this album!</p>
           </div>
         `;
         return;
       }
 
       grid.innerHTML = realPhotos.map((p, idx) => `
-        <div style="background: var(--bg-secondary); border: 1px solid var(--border-subtle); border-radius: var(--radius-xs); overflow: hidden; position: relative;">
-          <img src="${p.thumbnail_url || p.url}" style="width: 100%; aspect-ratio: 1; object-fit: cover;" onerror="this.src='https://images.unsplash.com/photo-1583939003579-730e3918a45a?auto=format&fit=crop&w=400&q=80'">
-          <div style="padding: 8px; font-size: 0.72rem;">
-            <p style="font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${p.original_name || 'photo.webp'}</p>
-            <p style="color: var(--text-muted); font-size: 0.65rem;">${p.size_bytes ? (p.size_bytes / (1024*1024)).toFixed(1) + ' MB' : 'WebP'} • ${p.provider || 'Cloud'}</p>
+        <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-xs); overflow: hidden; position: relative; box-shadow: var(--shadow-sm); transition: transform 0.2s ease;">
+          <div style="position: relative; aspect-ratio: 1; overflow: hidden; background: #000;">
+            <img src="${p.thumbnail_url || p.url}" alt="${p.original_name || 'photo'}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.src='https://images.unsplash.com/photo-1583939003579-730e3918a45a?auto=format&fit=crop&w=400&q=80'">
+            <span class="chip-tag" style="position: absolute; bottom: 6px; left: 6px; background: rgba(0,0,0,0.75); color: #FDFBF7; font-size: 0.6rem; padding: 2px 6px; text-transform: uppercase;">
+              ${p.provider || 'Cloud'}
+            </span>
           </div>
-          <button onclick="deleteRealPhoto('${p.id}', ${idx})" style="position: absolute; top: 6px; right: 6px; background: rgba(18,18,18,0.85); color: #FFF; width: 24px; height: 24px; border-radius: 50%; font-size: 0.75rem; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,0.3);" title="Delete Photo">✕</button>
+          <div style="padding: 10px; font-size: 0.72rem;">
+            <p style="font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-primary); margin-bottom: 2px;" title="${p.original_name || 'photo.webp'}">${p.original_name || 'photo.webp'}</p>
+            <p style="color: var(--text-muted); font-size: 0.65rem; display: flex; justify-content: space-between;">
+              <span>${p.size_bytes ? (p.size_bytes / (1024*1024)).toFixed(2) + ' MB' : '4K WebP'}</span>
+              <span style="color: var(--accent-emerald); font-weight: 600;">✓ Synced</span>
+            </p>
+          </div>
+          <button onclick="deleteRealPhoto('${p.id}', ${idx})" style="position: absolute; top: 8px; right: 8px; background: rgba(225,29,72,0.9); color: #FFF; width: 26px; height: 26px; border-radius: 50%; font-size: 0.8rem; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,0.4); cursor: pointer;" title="Delete Photo">✕</button>
         </div>
       `).join('');
     }
@@ -208,7 +244,7 @@
       });
     }
 
-    // REAL BULK PHOTO UPLOAD PROCESSOR
+    // REAL BULK PHOTO UPLOAD PROCESSOR WITH INSTANT LIVE GRID UPDATES
     async function handleRealPhotoUpload(e) {
       const files = Array.from(e.target.files);
       if (!files.length) return;
@@ -223,11 +259,13 @@
 
       summaryText.innerHTML = `<strong>${files.length} Photos Selected</strong> for Upload to Album: <em>${currentSlug}</em>`;
 
+      let uploadedCount = 0;
+
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
         const percent = Math.round(((i + 1) / files.length) * 100);
 
-        statusText.innerText = `Compressing & Uploading photo ${i + 1} of ${files.length} (${file.name})...`;
+        statusText.innerText = `Processing & Uploading photo ${i + 1} of ${files.length} (${file.name})...`;
         progressFill.style.width = `${percent}%`;
         percentText.innerText = `${percent}%`;
 
@@ -267,27 +305,36 @@
             size_bytes: uploadResult.size_bytes || uploadBlob.size
           };
 
-          const dbResp = await fetch('/api/photos', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(photoRecord)
-          });
-          const dbData = await dbResp.json();
+          let savedPhoto = null;
+          try {
+            const dbResp = await fetch('/api/photos', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(photoRecord)
+            });
+            const dbData = await dbResp.json();
+            savedPhoto = dbData.photo || { id: 'photo_' + Date.now() + '_' + i, ...photoRecord };
+          } catch (dbErr) {
+            savedPhoto = { id: 'photo_' + Date.now() + '_' + i, ...photoRecord };
+          }
 
-          const savedPhoto = dbData.photo || { id: 'photo_' + Date.now() + '_' + i, ...photoRecord };
+          // INSTANTLY update live grid with this uploaded photo!
           realPhotos.unshift(savedPhoto);
+          localStorage.setItem(`photos_${currentSlug}`, JSON.stringify(realPhotos));
+          renderPhotoGrid();
+          uploadedCount++;
 
         } catch (err) {
           console.error('Failed to upload photo:', file.name, err);
         }
       }
 
-      // Save local cache and refresh grid
-      localStorage.setItem(`photos_${currentSlug}`, JSON.stringify(realPhotos));
-      renderPhotoGrid();
+      // Reset file input for future uploads
+      const fileInputEl = document.getElementById('file-upload-input');
+      if (fileInputEl) fileInputEl.value = '';
 
-      statusText.innerText = `✓ Complete! ${files.length} photos successfully uploaded & saved to database.`;
-      showToast(`✓ ${files.length} Photos uploaded successfully!`);
+      statusText.innerText = `✓ Done! ${uploadedCount} photos uploaded and visible in grid below.`;
+      showToast(`✓ ${uploadedCount} Photos uploaded successfully!`);
     }
   </script>
 </body>

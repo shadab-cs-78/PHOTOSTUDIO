@@ -203,7 +203,7 @@ const server = http.createServer(async (req, res) => {
     }));
   }
 
-  // 4. /api/stats
+  // 4. /api/stats (Real dynamic storage computation)
   if (pathname === '/api/stats') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
     if (req.method === 'POST') {
@@ -212,10 +212,59 @@ const server = http.createServer(async (req, res) => {
       saveDb();
       return res.end(JSON.stringify({ success: true }));
     }
+
+    let cldBytes = 0;
+    let ikBytes = 0;
+    let supaBytes = 0;
+    let totalPhotos = 0;
+
+    Object.values(db.photos || {}).forEach(photoList => {
+      if (Array.isArray(photoList)) {
+        photoList.forEach(p => {
+          totalPhotos++;
+          const bytes = Number(p.size_bytes) || 1200000;
+          if (p.provider === 'imagekit') ikBytes += bytes;
+          else if (p.provider === 'supabase' || p.provider === 'supabase-storage') supaBytes += bytes;
+          else cldBytes += bytes; // default cloudinary
+        });
+      }
+    });
+
+    const cldGB = cldBytes / (1024 * 1024 * 1024);
+    const ikGB = ikBytes / (1024 * 1024 * 1024);
+    const supaGB = supaBytes / (1024 * 1024 * 1024);
+    const totalGB = cldGB + ikGB + supaGB;
+
     return res.end(JSON.stringify({
       total_albums: db.albums.length,
-      storage: { total_quota_gb: 46.0, used_gb: 4.2, free_gb: 41.8 },
-      logs: db.logs
+      total_photos: totalPhotos,
+      storage: {
+        total_quota_gb: 46.0,
+        used_gb: Number(totalGB.toFixed(3)),
+        free_gb: Number((46.0 - totalGB).toFixed(3)),
+        cloudinary: {
+          limit_gb: 25.0,
+          used_bytes: cldBytes,
+          used_mb: Number((cldBytes / (1024 * 1024)).toFixed(2)),
+          used_gb: Number(cldGB.toFixed(3)),
+          percent: Number(((cldGB / 25.0) * 100).toFixed(1))
+        },
+        imagekit: {
+          limit_gb: 20.0,
+          used_bytes: ikBytes,
+          used_mb: Number((ikBytes / (1024 * 1024)).toFixed(2)),
+          used_gb: Number(ikGB.toFixed(3)),
+          percent: Number(((ikGB / 20.0) * 100).toFixed(1))
+        },
+        supabase: {
+          limit_gb: 1.0,
+          used_bytes: supaBytes,
+          used_mb: Number((supaBytes / (1024 * 1024)).toFixed(2)),
+          used_gb: Number(supaGB.toFixed(3)),
+          percent: Number(((supaGB / 1.0) * 100).toFixed(1))
+        }
+      },
+      logs: db.logs || []
     }));
   }
 
