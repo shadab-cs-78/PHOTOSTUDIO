@@ -103,12 +103,14 @@
   <script src="/js/admin.js"></script>
   <script>
     let currentSlug = 'alia-ranbir';
+    let albumStorageStrategy = 'auto';
     let realPhotos = [];
 
     document.addEventListener('DOMContentLoaded', () => {
       const urlParams = new URLSearchParams(window.location.search);
       currentSlug = urlParams.get('slug') || 'alia-ranbir';
       const urlTitle = urlParams.get('title');
+      albumStorageStrategy = urlParams.get('storage') || 'auto';
 
       document.getElementById('current-album-slug').innerText = `/a/${currentSlug}`;
       document.getElementById('preview-client-gallery-btn').href = `/a/${currentSlug}`;
@@ -157,8 +159,22 @@
         if (data && data.title) {
           document.getElementById('manage-album-title').innerText = data.title;
           document.getElementById('manage-album-subtitle').innerText = `Client: ${data.client_email || 'client@gmail.com'} • Guest PIN: ${data.guest_pin || '2026'}`;
+          if (data.storage_strategy) albumStorageStrategy = data.storage_strategy;
         }
       } catch (e) {}
+
+      // Update active storage badge
+      const badge = document.getElementById('batch-provider-badge');
+      if (badge) {
+        const strategyNames = {
+          'auto': '⚡ Auto Failover (46GB Free)',
+          'cloudinary': '☁️ Cloudinary (25GB Free)',
+          'imagekit': '🚀 ImageKit (20GB Mumbai CDN)',
+          'supabase': '🗄️ Supabase Storage (1GB DB)',
+          'cloudinary_imagekit': '💎 Cloudinary + ImageKit (45GB Dual)'
+        };
+        badge.innerText = strategyNames[albumStorageStrategy] || 'Auto Multi-Cloud (46GB)';
+      }
     }
 
     async function loadRealPhotos() {
@@ -291,7 +307,8 @@
               filename: file.name.replace(/\.[^/.]+$/, "") + ".webp",
               album_slug: currentSlug,
               image_base64: base64Data,
-              size_bytes: uploadBlob.size
+              size_bytes: uploadBlob.size,
+              storage_strategy: albumStorageStrategy
             })
           });
           const uploadResult = await uploadResp.json();

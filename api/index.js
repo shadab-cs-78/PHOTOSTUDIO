@@ -95,13 +95,16 @@ export default async function handler(req, res) {
       // POST /api/albums (Create New Album)
       if (req.method === 'POST') {
         const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body || {};
-        const { title, client_email, location, category, guest_pin = '2026', expiry_days = 30 } = body;
+        const { title, client_email, location, category, guest_pin = '2026', expiry_days = 30, storage_strategy = 'auto' } = body;
         
         const slug = (title || 'wedding')
           .toLowerCase()
           .replace(/[^a-z0-9]+/g, '-')
           .replace(/(^-|-$)/g, '')
           .slice(0, 20) + '-' + Math.random().toString(36).substring(2, 6);
+
+        const days = parseInt(expiry_days);
+        const expiresAt = (days && days > 0) ? new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString() : null;
 
         const newAlbum = {
           id: 'alb_' + Date.now(),
@@ -111,9 +114,10 @@ export default async function handler(req, res) {
           location: location || 'Katni • M.P.',
           category: category || 'wedding',
           guest_pin: guest_pin || '2026',
+          storage_strategy: storage_strategy || 'auto',
           status: 'ready',
           created_at: new Date().toISOString(),
-          expires_at: new Date(Date.now() + parseInt(expiry_days) * 24 * 60 * 60 * 1000).toISOString()
+          expires_at: expiresAt
         };
 
         if (hasSupabase) {
@@ -246,17 +250,16 @@ export default async function handler(req, res) {
       if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
       const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body || {};
-      const { filename, album_slug, image_base64, size_bytes } = body;
+      const { filename, album_slug, image_base64, size_bytes, storage_strategy = 'auto' } = body;
 
       const cleanFilename = (filename || `photo_${Date.now()}.webp`).replace(/[^a-zA-Z0-9._-]/g, '_');
 
-      // 1. Try Cloudinary Direct Upload
-      if (config.cloudinary.cloudName && config.cloudinary.apiKey && config.cloudinary.apiSecret && image_base64) {
+      // Helper for Cloudinary Upload
+      async function tryCloudinary() {
+        if (!config.cloudinary.cloudName || !config.cloudinary.apiKey || !config.cloudinary.apiSecret || !image_base64) return null;
         try {
           const timestamp = Math.round(new Date().getTime() / 1000);
           const folder = `thekatnicreation/${album_slug || 'general'}`;
-          
-          // Generate SHA1 signature
           const crypto = await import('crypto');
           const signature = crypto.default
             .createHash('sha1')
@@ -275,23 +278,24 @@ export default async function handler(req, res) {
             body: formData
           });
           const cldData = await cldResp.json();
-
           if (cldData.secure_url) {
-            return res.status(200).json({
+            return {
               success: true,
               provider: 'cloudinary',
               url: cldData.secure_url,
               thumbnail_url: cldData.secure_url.replace('/upload/', '/upload/w_600,c_scale,q_auto,f_auto/'),
               size_bytes: cldData.bytes || size_bytes
-            });
+            };
           }
-        } catch (cldErr) {
-          console.warn('Cloudinary upload error, trying next tier:', cldErr);
+        } catch (e) {
+          console.warn('Cloudinary upload error:', e);
         }
+        return null;
       }
 
-      // 2. Try ImageKit Upload
-      if (config.imagekit.privateKey && image_base64) {
+      // Helper for ImageKit Upload
+      async function tryImageKit() {
+        if (!config.imagekit.privateKey || !image_base64) return null;
         try {
           const ikFormData = new URLSearchParams();
           ikFormData.append('file', image_base64);
@@ -305,19 +309,36 @@ export default async function handler(req, res) {
             body: ikFormData
           });
           const ikData = await ikResp.json();
-
           if (ikData.url) {
-            return res.status(200).json({
+            return {
               success: true,
               provider: 'imagekit',
               url: ikData.url,
               thumbnail_url: ikData.thumbnailUrl || ikData.url + '?tr=w-600',
               size_bytes: ikData.size || size_bytes
-            });
+            };
           }
-        } catch (ikErr) {
-          console.warn('ImageKit upload error, trying next tier:', ikErr);
+        } catch (e) {
+          console.warn('ImageKit upload error:', e);
         }
+        return null;
+      }
+
+      // Route according to selected strategy:
+      let uploadResult = null;
+      if (storage_strategy === 'imagekit') {
+        uploadResult = await tryImageKit() || await tryCloudinary();
+      } else if (storage_strategy === 'cloudinary') {
+        uploadResult = await tryCloudinary() || await tryImageKit();
+      } else if (storage_strategy === 'cloudinary_imagekit') {
+        uploadResult = await tryCloudinary() || await tryImageKit();
+      } else {
+        // Auto default
+        uploadResult = await tryCloudinary() || await tryImageKit();
+      }
+
+      if (uploadResult) {
+        return res.status(200).json(uploadResult);
       }
 
       // 3. Fallback: Base64 / Local Blob URL

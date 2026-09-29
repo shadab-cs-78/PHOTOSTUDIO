@@ -112,12 +112,15 @@ const server = http.createServer(async (req, res) => {
 
     if (req.method === 'POST') {
       const body = await readBody(req);
-      const { title, client_email, location, category, guest_pin = '2026', expiry_days = 30 } = body;
+      const { title, client_email, location, category, guest_pin = '2026', expiry_days = 30, storage_strategy = 'auto' } = body;
       const cleanSlug = (title || 'wedding')
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/(^-|-$)/g, '')
         .slice(0, 20) + '-' + Math.random().toString(36).substring(2, 6);
+
+      const days = parseInt(expiry_days);
+      const expiresAt = (days && days > 0) ? new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString() : null;
 
       const newAlbum = {
         id: 'alb_' + Date.now(),
@@ -127,9 +130,10 @@ const server = http.createServer(async (req, res) => {
         location: location || 'Katni • M.P.',
         category: category || 'wedding',
         guest_pin: guest_pin || '2026',
+        storage_strategy: storage_strategy || 'auto',
         status: 'ready',
         created_at: new Date().toISOString(),
-        expires_at: new Date(Date.now() + parseInt(expiry_days) * 24 * 60 * 60 * 1000).toISOString()
+        expires_at: expiresAt
       };
 
       db.albums.unshift(newAlbum);
@@ -193,13 +197,18 @@ const server = http.createServer(async (req, res) => {
   if (pathname === '/api/upload') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
     const body = await readBody(req);
-    const { image_base64, size_bytes } = body;
+    const { image_base64, size_bytes, storage_strategy = 'auto' } = body;
+    let provider = 'cloudinary';
+    if (storage_strategy === 'imagekit') provider = 'imagekit';
+    else if (storage_strategy === 'supabase') provider = 'supabase';
+    else if (storage_strategy === 'cloudinary_imagekit') provider = 'cloudinary';
+
     return res.end(JSON.stringify({
       success: true,
-      provider: 'cloudinary',
+      provider: provider,
       url: image_base64 || 'https://images.unsplash.com/photo-1583939003579-730e3918a45a?auto=format&fit=crop&w=1600&q=85',
       thumbnail_url: image_base64 || 'https://images.unsplash.com/photo-1583939003579-730e3918a45a?auto=format&fit=crop&w=600&q=80',
-      size_bytes: size_bytes || 500000
+      size_bytes: size_bytes || 1200000
     }));
   }
 

@@ -75,11 +75,31 @@
         <div class="form-group">
           <label class="form-label">Storage Expiry Cycle</label>
           <select id="album-expiry" class="form-select">
-            <option value="30">30 Days (Standard Free Recycle Cycle)</option>
-            <option value="15">15 Days (Rapid Turnover)</option>
-            <option value="90">90 Days (Extended Archive)</option>
-            <option value="365">1 Year Vault</option>
+            <option value="3">3 Days (Fast Client Handoff)</option>
+            <option value="7">7 Days (1-Week Standard Access)</option>
+            <option value="15">15 Days (Fortnight Archival)</option>
+            <option value="30" selected>30 Days (1 Month Standard)</option>
+            <option value="90">90 Days (Quarterly Season)</option>
+            <option value="365">1 Year Extended Vault</option>
+            <option value="0">Permanent (No Expiry)</option>
           </select>
+          <p style="font-size: 0.72rem; color: var(--text-muted); margin-top: 4px;">
+            Set when the client download portal expires (e.g. 3 days, 7 days, 15 days, etc.).
+          </p>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Cloud Storage Engine for this Album</label>
+          <select id="album-storage-strategy" class="form-select">
+            <option value="auto" selected>⚡ Auto Failover (Cloudinary 25GB → ImageKit 20GB → Supabase 1GB)</option>
+            <option value="cloudinary">☁️ Cloudinary Only (25 GB Free Quota)</option>
+            <option value="imagekit">🚀 ImageKit Only (20 GB Mumbai Indian CDN)</option>
+            <option value="supabase">🗄️ Supabase Storage Only (1 GB Database Bucket)</option>
+            <option value="cloudinary_imagekit">💎 Cloudinary + ImageKit Combined (45 GB Dual-Tier)</option>
+          </select>
+          <p style="font-size: 0.72rem; color: var(--text-muted); margin-top: 4px;">
+            Choose a specific storage provider or combine two storages for this client folder.
+          </p>
         </div>
 
         <button type="submit" id="create-btn" class="btn-primary" style="width: 100%; justify-content: center; padding: 12px; margin-top: 1.5rem;">
@@ -146,6 +166,7 @@
       const category = document.getElementById('album-category').value;
       const guestPin = document.getElementById('album-pin').value.trim() || '2026';
       const expiryDays = document.getElementById('album-expiry').value;
+      const storageStrategy = document.getElementById('album-storage-strategy').value;
 
       const btn = document.getElementById('create-btn');
       btn.innerText = 'Creating Album in Database...';
@@ -161,7 +182,8 @@
             location: location,
             category: category,
             guest_pin: guestPin,
-            expiry_days: expiryDays
+            expiry_days: expiryDays,
+            storage_strategy: storageStrategy
           })
         });
         const data = await resp.json();
@@ -174,7 +196,7 @@
 
           showToast('✓ Album Created in Database! Redirecting to Photo Upload...');
           setTimeout(() => {
-            window.location.href = `/admin/album-manage.html?slug=${data.album.slug}&title=${encodeURIComponent(data.album.title)}`;
+            window.location.href = `/admin/album-manage.html?slug=${data.album.slug}&title=${encodeURIComponent(data.album.title)}&storage=${storageStrategy}`;
           }, 800);
         } else {
           alert('Error creating album: ' + (data.error || 'Server error'));
@@ -185,14 +207,16 @@
         console.error('Create album failed:', err);
         // Offline fallback
         const slug = currentPreviewSlug + '-' + Math.random().toString(36).substring(2, 6);
-        const fallbackAlbum = { slug, title, client_email: clientEmail, location, category, guest_pin: guestPin, status: 'ready', expires_at: new Date(Date.now() + 30*86400000).toISOString() };
+        const days = parseInt(expiryDays) || 30;
+        const expiresAt = days > 0 ? new Date(Date.now() + days * 86400000).toISOString() : null;
+        const fallbackAlbum = { slug, title, client_email: clientEmail, location, category, guest_pin: guestPin, storage_strategy: storageStrategy, status: 'ready', expires_at: expiresAt };
         const localAlbums = JSON.parse(localStorage.getItem('photovault_local_albums') || '[]');
         localAlbums.unshift(fallbackAlbum);
         localStorage.setItem('photovault_local_albums', JSON.stringify(localAlbums));
 
         showToast('✓ Album Created locally! Redirecting...');
         setTimeout(() => {
-          window.location.href = `/admin/album-manage.html?slug=${slug}&title=${encodeURIComponent(title)}`;
+          window.location.href = `/admin/album-manage.html?slug=${slug}&title=${encodeURIComponent(title)}&storage=${storageStrategy}`;
         }, 800);
       }
     }

@@ -198,18 +198,28 @@ const GalleryManager = {
   // Expiry Countdown Timer
   startExpiryCountdown: function(elementId, expiresAtIso) {
     const el = document.getElementById(elementId);
-    if (!el || !expiresAtIso) return;
+    if (!el) return;
+
+    if (!expiresAtIso || expiresAtIso === 'never' || expiresAtIso === '0') {
+      el.innerHTML = '<span style="color: var(--accent-emerald); font-weight: 700;">✨ PERMANENT ARCHIVE (NO EXPIRY)</span>';
+      return;
+    }
 
     function update() {
       const diff = new Date(expiresAtIso).getTime() - new Date().getTime();
       if (diff <= 0) {
-        el.innerHTML = '<span style="color: var(--accent-rose);">ARCHIVE EXPIRED</span>';
+        el.innerHTML = '<span style="color: var(--accent-rose); font-weight: 700;">⚠️ ARCHIVE EXPIRED</span>';
         return;
       }
       const days = Math.floor(diff / (1000 * 60 * 60 * 24));
       const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
       const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-      el.innerHTML = `<span>EXPIRY IN: <strong>${days}d ${hours}h ${mins}m</strong></span>`;
+      
+      let timeStr = '';
+      if (days > 0) timeStr += `${days}d `;
+      timeStr += `${hours}h ${mins}m`;
+
+      el.innerHTML = `<span>EXPIRY IN: <strong style="color: #E11D48; font-family: var(--font-mono);">${timeStr}</strong></span>`;
     }
 
     update();
