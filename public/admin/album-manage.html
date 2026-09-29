@@ -321,8 +321,17 @@
           // INSTANTLY update live grid with this uploaded photo!
           realPhotos.unshift(savedPhoto);
           localStorage.setItem(`photos_${currentSlug}`, JSON.stringify(realPhotos));
+          localStorage.setItem('photovault_last_upload', Date.now().toString());
           renderPhotoGrid();
           uploadedCount++;
+
+          // Broadcast to any open client gallery tabs
+          if (typeof BroadcastChannel !== 'undefined') {
+            try {
+              const syncChannel = new BroadcastChannel('photovault_sync');
+              syncChannel.postMessage({ type: 'NEW_PHOTO', slug: currentSlug, count: uploadedCount });
+            } catch (bcErr) {}
+          }
 
         } catch (err) {
           console.error('Failed to upload photo:', file.name, err);
@@ -332,6 +341,14 @@
       // Reset file input for future uploads
       const fileInputEl = document.getElementById('file-upload-input');
       if (fileInputEl) fileInputEl.value = '';
+
+      // Final batch sync broadcast
+      if (typeof BroadcastChannel !== 'undefined') {
+        try {
+          const syncChannel = new BroadcastChannel('photovault_sync');
+          syncChannel.postMessage({ type: 'BATCH_COMPLETE', slug: currentSlug, total: uploadedCount });
+        } catch (bcErr) {}
+      }
 
       statusText.innerText = `✓ Done! ${uploadedCount} photos uploaded and visible in grid below.`;
       showToast(`✓ ${uploadedCount} Photos uploaded successfully!`);

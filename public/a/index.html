@@ -175,6 +175,27 @@
 
       loadRealAlbumData();
 
+      // Setup Real-Time Live Sync (No Page Refresh Needed)
+      if (typeof BroadcastChannel !== 'undefined') {
+        const syncChannel = new BroadcastChannel('photovault_sync');
+        syncChannel.onmessage = (event) => {
+          if (event.data && (!event.data.slug || event.data.slug === currentSlug)) {
+            syncPhotosSilently(true);
+          }
+        };
+      }
+
+      window.addEventListener('storage', (e) => {
+        if (e.key === `photos_${currentSlug}` || e.key === 'photovault_last_upload') {
+          syncPhotosSilently(true);
+        }
+      });
+
+      // Background live poll every 2.5 seconds
+      setInterval(() => {
+        syncPhotosSilently(false);
+      }, 2500);
+
       // Check saved unlock state
       const savedEmail = localStorage.getItem('photovault_client_email');
       const isUnlocked = localStorage.getItem(`unlocked_${currentSlug}`);
@@ -192,6 +213,38 @@
         GalleryManager.downloadAllZip(title);
       });
     });
+
+    async function syncPhotosSilently(notify = false) {
+      try {
+        const photoResp = await fetch(`/api/photos?slug=${currentSlug}`);
+        const photoData = await photoResp.json();
+        let freshPhotos = [];
+        if (photoData && Array.isArray(photoData.photos)) {
+          freshPhotos = photoData.photos;
+        } else if (Array.isArray(photoData)) {
+          freshPhotos = photoData;
+        }
+
+        // Merge with local storage
+        const localPhotos = JSON.parse(localStorage.getItem(`photos_${currentSlug}`) || '[]');
+        localPhotos.forEach(lp => {
+          if (!freshPhotos.some(p => p.id === lp.id)) freshPhotos.push(lp);
+        });
+
+        // Check if there are new photos
+        const currentIds = new Set(albumPhotos.map(p => p.id || p.url));
+        const hasNew = freshPhotos.some(p => !currentIds.has(p.id || p.url)) || freshPhotos.length !== albumPhotos.length;
+
+        if (hasNew) {
+          const addedCount = freshPhotos.length - albumPhotos.length;
+          albumPhotos = freshPhotos;
+          GalleryManager.renderMasonry('masonry-gallery-container', albumPhotos);
+          if (notify && window.showToast) {
+            window.showToast(`✨ ${addedCount > 0 ? addedCount : 'New'} photo(s) added live!`);
+          }
+        }
+      } catch (e) {}
+    }
 
     async function loadRealAlbumData() {
       // 1. Fetch Album Details

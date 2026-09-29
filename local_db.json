@@ -57,6 +57,18 @@
         "size_bytes": 1540000,
         "uploaded_at": "2026-09-29T12:38:06.298Z"
       }
+    ],
+    "rahul-priya-spt8": [
+      {
+        "id": "photo_1790686676634_dbji",
+        "album_slug": "rahul-priya-spt8",
+        "url": "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1600&q=85",
+        "thumbnail_url": "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=800&q=80",
+        "original_name": "mandap_ceremony_001.webp",
+        "provider": "cloudinary",
+        "size_bytes": 1850000,
+        "uploaded_at": "2026-09-29T12:57:56.634Z"
+      }
     ]
   },
   "logs": []
