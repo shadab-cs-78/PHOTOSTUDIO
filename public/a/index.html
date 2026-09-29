@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Client Wedding Gallery — The Katni Creation</title>
-  <link rel="icon" type="image/svg+xml" href="/assets/logo.svg">
+  <link rel="icon" type="image/png" href="/assets/logo.png">
   <link rel="stylesheet" href="/css/style.css">
   <!-- JSZip CDN for in-browser client ZIP packaging -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -17,8 +17,12 @@
   <header class="site-header">
     <div class="nav-container">
       <div class="brand-wrapper">
-        <a href="/" style="display: flex; align-items: center; gap: 10px;">
-          <img src="/assets/logo.svg" alt="The Katni Creation" style="height: 38px; width: auto;">
+        <a href="/" style="display: flex; align-items: center; gap: 12px; text-decoration: none;">
+          <img src="/assets/logo.png" alt="Katni Creation" style="height: 42px; width: 42px; border-radius: 50%; object-fit: cover; box-shadow: 0 2px 10px rgba(0,0,0,0.15); border: 1.5px solid #D4AF37;">
+          <div style="display: flex; flex-direction: column;">
+            <span style="font-family: var(--font-serif); font-size: 1.2rem; font-weight: 700; letter-spacing: 0.08em; color: var(--text-primary); line-height: 1.1;">KATNI CREATION</span>
+            <span style="font-family: var(--font-sans); font-size: 0.6rem; font-weight: 700; letter-spacing: 0.18em; color: var(--accent-gold-dark); text-transform: uppercase;">Wedding Photography</span>
+          </div>
         </a>
       </div>
       <div class="nav-actions">
@@ -57,10 +61,7 @@
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
             Copy QR Link
           </button>
-          <button class="btn-primary" id="btn-download-all-zip">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-            Download All Photos (ZIP)
-          </button>
+          
         </div>
       </div>
     </section>
@@ -80,7 +81,7 @@
     <div class="modal-dialog">
       <div class="modal-header" style="text-align: center;">
         <div style="margin-bottom: 0.75rem;">
-          <img src="/assets/logo.svg" alt="The Katni Creation" style="height: 42px;">
+          <img src="/assets/logo.png" alt="Katni Creation" style="height: 60px; width: 60px; border-radius: 50%; object-fit: cover; border: 2px solid #D4AF37; box-shadow: 0 4px 16px rgba(212,175,55,0.3); margin: 0 auto;">
         </div>
         <div class="modal-tag">PRIVATE WEDDING DELIVERY</div>
         <h3 class="modal-title">Unlock Wedding Album</h3>
@@ -128,7 +129,13 @@
     <div class="container">
       <div class="footer-columns-grid">
         <div>
-          <img src="/assets/logo-light.svg" alt="The Katni Creation" style="height: 42px; width: auto; display: block; margin-bottom: 0.75rem;">
+          <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 0.75rem;">
+            <img src="/assets/logo.png" alt="Katni Creation" style="height: 48px; width: 48px; border-radius: 50%; object-fit: cover; border: 2px solid #D4AF37; box-shadow: 0 4px 14px rgba(212,175,55,0.25);">
+            <div>
+              <div style="font-family: var(--font-serif); font-size: 1.2rem; font-weight: 700; color: #FDFBF7;">KATNI CREATION</div>
+              <div style="font-size: 0.62rem; color: var(--accent-gold); letter-spacing: 0.15em; font-weight: 700; text-transform: uppercase;">Wedding Photography</div>
+            </div>
+          </div>
           <p class="footer-text">
             Official delivery portal for The Katni Creation clients and families.
           </p>
@@ -208,10 +215,7 @@
       }
 
       // Download All ZIP button
-      document.getElementById('btn-download-all-zip').addEventListener('click', () => {
-        const title = currentAlbum ? currentAlbum.title : 'wedding_photos';
-        GalleryManager.downloadAllZip(title);
-      });
+      
     });
 
     async function syncPhotosSilently(notify = false) {
