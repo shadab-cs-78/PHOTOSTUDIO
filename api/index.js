@@ -62,7 +62,8 @@ export default async function handler(req, res) {
     // 1. /api/albums (Create, List, Get, Delete Albums)
     // --------------------------------------------------------------------------
     if (pathname === '/albums' || pathname.startsWith('/albums/')) {
-      const slug = url.searchParams.get('slug') || (req.query && req.query.slug);
+      const pathSlug = pathname.replace(/^\/albums\/?/, '');
+      const slug = (pathSlug && pathSlug.length > 0 ? pathSlug : null) || url.searchParams.get('slug') || (req.query && req.query.slug);
 
       // GET /api/albums?slug=xxx OR /api/albums
       if (req.method === 'GET') {
@@ -157,7 +158,8 @@ export default async function handler(req, res) {
     // 2. /api/photos (Get Photos, Save Uploaded Photo, Delete Photo)
     // --------------------------------------------------------------------------
     if (pathname === '/photos' || pathname.startsWith('/photos/')) {
-      const slug = url.searchParams.get('slug') || (req.query && req.query.slug);
+      const pathPhotoSlug = pathname.replace(/^\/photos\/?/, '');
+      const slug = (pathPhotoSlug && pathPhotoSlug.length > 0 ? pathPhotoSlug : null) || url.searchParams.get('slug') || (req.query && req.query.slug);
       const photoId = url.searchParams.get('id') || (req.query && req.query.id);
 
       // GET /api/photos?slug=xxx

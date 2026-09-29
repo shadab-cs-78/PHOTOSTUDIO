@@ -96,9 +96,10 @@ const server = http.createServer(async (req, res) => {
   // --------------------------------------------------------------------------
 
   // 1. /api/albums
-  if (pathname === '/api/albums') {
+  if (pathname === '/api/albums' || pathname.startsWith('/api/albums/')) {
     res.writeHead(200, { 'Content-Type': 'application/json' });
-    const slug = parsedUrl.query.slug;
+    const pathSlug = pathname.replace(/^\/api\/albums\/?/, '');
+    const slug = pathSlug || parsedUrl.query.slug;
 
     if (req.method === 'GET') {
       if (slug) {
@@ -147,9 +148,10 @@ const server = http.createServer(async (req, res) => {
   }
 
   // 2. /api/photos
-  if (pathname === '/api/photos') {
+  if (pathname === '/api/photos' || pathname.startsWith('/api/photos/')) {
     res.writeHead(200, { 'Content-Type': 'application/json' });
-    const slug = parsedUrl.query.slug;
+    const pathSlug = pathname.replace(/^\/api\/photos\/?/, '');
+    const slug = pathSlug || parsedUrl.query.slug;
     const photoId = parsedUrl.query.id;
 
     if (req.method === 'GET') {

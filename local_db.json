@@ -1,0 +1,63 @@
+{
+  "albums": [
+    {
+      "id": "alb_1790685500228",
+      "slug": "rahul-priya-spt8",
+      "title": "Rahul & Priya",
+      "client_email": "rahul.wedding@gmail.com",
+      "location": "Tilak College, Katni",
+      "category": "wedding",
+      "guest_pin": "2026",
+      "status": "ready",
+      "created_at": "2026-09-29T12:38:20.228Z",
+      "expires_at": "2026-10-29T12:38:20.228Z"
+    },
+    {
+      "id": "alb_demo_1",
+      "slug": "alia-ranbir",
+      "title": "Alia & Ranbir",
+      "client_email": "alia.b@gmail.com",
+      "location": "Vastu • Mumbai",
+      "category": "wedding",
+      "guest_pin": "2026",
+      "status": "ready",
+      "created_at": "2026-09-29T12:38:06.297Z",
+      "expires_at": "2026-10-29T12:38:06.298Z"
+    }
+  ],
+  "photos": {
+    "alia-ranbir": [
+      {
+        "id": "p1",
+        "album_slug": "alia-ranbir",
+        "url": "https://images.unsplash.com/photo-1583939003579-730e3918a45a?auto=format&fit=crop&w=1600&q=85",
+        "thumbnail_url": "https://images.unsplash.com/photo-1583939003579-730e3918a45a?auto=format&fit=crop&w=800&q=80",
+        "original_name": "vows_balcony_001.webp",
+        "provider": "cloudinary",
+        "size_bytes": 1420000,
+        "uploaded_at": "2026-09-29T12:38:06.298Z"
+      },
+      {
+        "id": "p2",
+        "album_slug": "alia-ranbir",
+        "url": "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1600&q=85",
+        "thumbnail_url": "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=800&q=80",
+        "original_name": "ceremony_walk_002.webp",
+        "provider": "imagekit",
+        "size_bytes": 1680000,
+        "uploaded_at": "2026-09-29T12:38:06.298Z"
+      },
+      {
+        "id": "p3",
+        "album_slug": "alia-ranbir",
+        "url": "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=1600&q=85",
+        "thumbnail_url": "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=800&q=80",
+        "original_name": "palace_portrait_003.webp",
+        "provider": "cloudinary",
+        "size_bytes": 1540000,
+        "uploaded_at": "2026-09-29T12:38:06.298Z"
+      }
+    ]
+  },
+  "logs": []
+}
