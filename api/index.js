@@ -95,7 +95,7 @@ export default async function handler(req, res) {
       // POST /api/albums (Create New Album)
       if (req.method === 'POST') {
         const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body || {};
-        const { title, client_email, location, category, guest_pin = '2026', expiry_days = 30, storage_strategy = 'auto' } = body;
+        const { title, client_email, location, category, guest_pin = '2026', expiry_days = 7, storage_strategy = 'auto' } = body;
         
         const slug = (title || 'wedding')
           .toLowerCase()

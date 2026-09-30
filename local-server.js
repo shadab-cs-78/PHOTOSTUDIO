@@ -112,7 +112,7 @@ const server = http.createServer(async (req, res) => {
 
     if (req.method === 'POST') {
       const body = await readBody(req);
-      const { title, client_email, location, category, guest_pin = '2026', expiry_days = 30, storage_strategy = 'auto' } = body;
+      const { title, client_email, location, category, guest_pin = '2026', expiry_days = 7, storage_strategy = 'auto' } = body;
       const cleanSlug = (title || 'wedding')
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, '-')
