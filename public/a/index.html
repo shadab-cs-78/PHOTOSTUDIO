@@ -108,7 +108,10 @@
       <span id="music-label-text" class="music-label">🎵 Wedding Melody</span>
     </button>
   </div>
-  <audio id="ambient-audio-player" loop preload="auto" src="https://assets.mixkit.co/music/preview/mixkit-wedding-waltz-149.mp3"></audio>
+  <audio id="ambient-audio-player" loop preload="auto">
+    <source src="/assets/music.mp3" type="audio/mpeg">
+    <source src="https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3?filename=indian-traditional-wedding-112191.mp3" type="audio/mpeg">
+  </audio>
 
   <!-- FOOTER -->
   <footer class="site-footer">
@@ -416,27 +419,30 @@
 
     function initAmbientMusic() {
       if (!audioPlayer) return;
-      audioPlayer.volume = 0.28;
+      audioPlayer.volume = 0.40;
 
       const userPref = localStorage.getItem('photovault_music_enabled');
       if (userPref === 'false') {
         setMusicState(false);
       } else {
-        const startOnInteraction = () => {
+        const startOnGesture = () => {
           if (localStorage.getItem('photovault_music_enabled') !== 'false' && !isMusicPlaying) {
             playAmbientMusic();
           }
         };
-        document.addEventListener('click', startOnInteraction, { once: true });
-        document.addEventListener('touchstart', startOnInteraction, { once: true });
+        ['click', 'touchstart', 'keydown'].forEach(evt => {
+          document.addEventListener(evt, startOnGesture, { once: true });
+        });
       }
     }
 
     function playAmbientMusic() {
       if (!audioPlayer) return;
+      audioPlayer.volume = 0.40;
       audioPlayer.play().then(() => {
         setMusicState(true);
-      }).catch(() => {
+      }).catch((err) => {
+        console.warn('Playback pending user interaction:', err);
         setMusicState(false);
       });
     }
@@ -448,13 +454,15 @@
     }
 
     function toggleAmbientMusic() {
+      if (!audioPlayer) return;
       if (isMusicPlaying) {
         pauseAmbientMusic();
         localStorage.setItem('photovault_music_enabled', 'false');
         if (window.showToast) window.showToast('🔇 Background Music: OFF');
       } else {
-        playAmbientMusic();
         localStorage.setItem('photovault_music_enabled', 'true');
+        audioPlayer.currentTime = audioPlayer.currentTime || 0;
+        playAmbientMusic();
         if (window.showToast) window.showToast('🎵 Background Music: ON');
       }
     }
