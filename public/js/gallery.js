@@ -146,66 +146,6 @@ const GalleryManager = {
     }
   },
 
-  // 2. Mobile-Safe Batched ZIP Download with Progress Feedback
-  downloadAllZip: async function(albumTitle = 'wedding_monograph') {
-    if (typeof JSZip === 'undefined') {
-      alert('JSZip library is still loading. Please try again in 5 seconds.');
-      return;
-    }
-
-    if (this.currentPhotos.length === 0) {
-      alert('No photos available in this album to download.');
-      return;
-    }
-
-    const total = this.currentPhotos.length;
-    this.recordDownloadLog('DOWNLOAD_ZIP', `All ${total} Photos (ZIP Archive)`);
-
-    if (window.showToast) {
-      window.showToast(`📦 Packaging ${total} high-res photos into ZIP... Please wait.`);
-    }
-
-    const zip = new JSZip();
-    const folder = zip.folder(albumTitle.replace(/[^a-z0-9]/gi, '_').toLowerCase());
-
-    // Batch download in small chunks of 3 to avoid browser memory exhaust on mobile
-    const BATCH_SIZE = 3;
-    for (let i = 0; i < total; i += BATCH_SIZE) {
-      const chunk = this.currentPhotos.slice(i, i + BATCH_SIZE);
-      await Promise.all(
-        chunk.map(async (photo, chunkIdx) => {
-          const actualIdx = i + chunkIdx;
-          try {
-            const resp = await fetch(photo.url);
-            const blob = await resp.blob();
-            folder.file(`photo_${String(actualIdx + 1).padStart(3, '0')}.webp`, blob);
-          } catch (e) {
-            console.warn('Failed to fetch photo for zip:', photo.url, e);
-          }
-        })
-      );
-    }
-
-    if (window.showToast) window.showToast('Compiling ZIP archive...');
-
-    const zipBlob = await zip.generateAsync({
-      type: 'blob',
-      compression: 'DEFLATE',
-      compressionOptions: { level: 6 }
-    });
-
-    const blobUrl = URL.createObjectURL(zipBlob);
-    const link = document.createElement('a');
-    link.href = blobUrl;
-    link.download = `${albumTitle.replace(/[^a-z0-9]/gi, '_')}_lossless_delivery.zip`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(blobUrl);
-
-    if (window.showToast) window.showToast('✓ Full Album ZIP download completed!');
-  },
-
   // Expiry Countdown Timer
   startExpiryCountdown: function(elementId, expiresAtIso) {
     const el = document.getElementById(elementId);
