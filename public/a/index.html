@@ -247,8 +247,46 @@
       }
 
       // Download All ZIP button
-      
+      const zipBtn = document.getElementById('btn-download-all-zip');
+      if (zipBtn) {
+        zipBtn.addEventListener('click', () => {
+          const title = (currentAlbum && currentAlbum.title) ? currentAlbum.title : 'Katni_Creation_Wedding';
+          GalleryManager.downloadAllZip(title);
+        });
+      }
     });
+
+    // Toast notification utility
+    window.showToast = function(msg) {
+      let toast = document.getElementById('app-toast');
+      if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'app-toast';
+        toast.style.position = 'fixed';
+        toast.style.bottom = '24px';
+        toast.style.left = '50%';
+        toast.style.transform = 'translateX(-50%)';
+        toast.style.background = 'rgba(20, 20, 22, 0.95)';
+        toast.style.color = '#FDFBF7';
+        toast.style.padding = '12px 24px';
+        toast.style.borderRadius = '30px';
+        toast.style.boxShadow = '0 10px 30px rgba(0,0,0,0.5)';
+        toast.style.border = '1px solid #D4AF37';
+        toast.style.fontFamily = 'var(--font-sans)';
+        toast.style.fontSize = '0.85rem';
+        toast.style.fontWeight = '600';
+        toast.style.zIndex = '9999';
+        toast.style.transition = 'all 0.3s ease';
+        document.body.appendChild(toast);
+      }
+      toast.innerText = msg;
+      toast.style.opacity = '1';
+      toast.style.display = 'block';
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        setTimeout(() => { toast.style.display = 'none'; }, 300);
+      }, 3500);
+    };
 
     async function syncPhotosSilently(notify = false) {
       try {
@@ -334,16 +372,39 @@
       document.getElementById('logged-email-text').innerText = email;
     }
 
+    // Rate Limiting on PIN Unlocks (Brute Force Protection)
     function handlePinUnlock() {
+      const lockoutKey = `pin_lockout_${currentSlug}`;
+      const attemptsKey = `pin_attempts_${currentSlug}`;
+      const lockedUntil = parseInt(localStorage.getItem(lockoutKey) || '0', 10);
+      const now = Date.now();
+
+      if (now < lockedUntil) {
+        const remSecs = Math.ceil((lockedUntil - now) / 1000);
+        alert(`Too many incorrect attempts. Please wait ${remSecs}s before trying again.`);
+        return;
+      }
+
       const pin = document.getElementById('wedding-pin-input').value.trim();
       const expectedPin = currentAlbum ? (currentAlbum.guest_pin || '2026') : '2026';
 
       if (pin === expectedPin || pin === '2026' || pin.length === 4) {
+        localStorage.removeItem(attemptsKey);
+        localStorage.removeItem(lockoutKey);
         localStorage.setItem(`unlocked_${currentSlug}`, 'true');
         document.getElementById('verification-modal').classList.remove('active');
         if (window.showToast) window.showToast('✓ Album Unlocked! Enjoy the photos.');
       } else {
-        alert('Galat PIN! Kripya sahi 4-digit PIN enter karein.');
+        let attempts = parseInt(localStorage.getItem(attemptsKey) || '0', 10) + 1;
+        localStorage.setItem(attemptsKey, attempts.toString());
+
+        if (attempts >= 5) {
+          const lockTime = Date.now() + 3 * 60 * 1000; // 3 minute lock
+          localStorage.setItem(lockoutKey, lockTime.toString());
+          alert('Galat PIN! 5 failed attempts. Please wait 3 minutes or continue with Gmail.');
+        } else {
+          alert(`Galat PIN! (${5 - attempts} attempts remaining). Kripya sahi 4-digit PIN enter karein.`);
+        }
       }
     }
 

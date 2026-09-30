@@ -455,6 +455,48 @@ export default async function handler(req, res) {
       });
     }
 
+    // --------------------------------------------------------------------------
+    // 5. /api/cron/cleanup (Automated Storage Recycling & Expired Album Cleanup)
+    // --------------------------------------------------------------------------
+    if (pathname === '/cron/cleanup' || pathname.startsWith('/cron/cleanup')) {
+      const nowIso = new Date().toISOString();
+      let cleanedCount = 0;
+      let cleanedSlugs = [];
+
+      if (hasSupabase) {
+        try {
+          // Find expired albums
+          const expResp = await supabaseFetch(`albums?expires_at=lt.${nowIso}&select=slug`, {}, config);
+          const expData = await expResp.json();
+
+          if (Array.isArray(expData) && expData.length > 0) {
+            for (const alb of expData) {
+              await supabaseFetch(`photos?album_slug=eq.${alb.slug}`, { method: 'DELETE' }, config);
+              await supabaseFetch(`albums?slug=eq.${alb.slug}`, { method: 'DELETE' }, config);
+              cleanedCount++;
+              cleanedSlugs.push(alb.slug);
+            }
+          }
+        } catch (cronErr) {
+          console.error('Supabase cron cleanup error:', cronErr);
+        }
+      }
+
+      // Cleanup local store
+      const initialCount = localStore.albums.length;
+      localStore.albums = localStore.albums.filter(a => !a.expires_at || new Date(a.expires_at) > new Date());
+      cleanedCount += (initialCount - localStore.albums.length);
+
+      return res.status(200).json({
+        success: true,
+        cron_job: 'STORAGE_AUTO_RECYCLE',
+        timestamp: new Date().toISOString(),
+        cleaned_albums_count: cleanedCount,
+        cleaned_slugs: cleanedSlugs,
+        message: `${cleanedCount} expired album(s) successfully cleaned and storage recycled.`
+      });
+    }
+
     // Default fallback
     return res.status(200).json({
       service: 'The Katni Creation API',

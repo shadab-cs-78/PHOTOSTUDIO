@@ -2,6 +2,7 @@
  * PHOTOVAULT - Clean Client Photo Delivery & Silent Admin Audit Trail
  * Photos are 100% CLEAN (No visible watermarks).
  * Every download is silently logged in the Admin Dashboard with User Gmail, Photo Name, and Timestamp.
+ * Includes batch streaming JSZip download to prevent mobile browser memory crashes.
  */
 
 const GalleryManager = {
@@ -29,7 +30,7 @@ const GalleryManager = {
         <img class="masonry-img" src="${photo.thumbnail_url || photo.url}" alt="${photo.original_name || 'Wedding Photo'}" loading="lazy" onclick="GalleryManager.openLightbox(${index})">
         <div class="masonry-hover-overlay">
           <div class="photo-meta-info">
-            <p style="font-weight: 600; font-size: 0.78rem;">#${index + 1} • ${photo.provider || 'R2 Direct'}</p>
+            <p style="font-weight: 600; font-size: 0.78rem;">#${index + 1} • ${photo.provider || 'Cloud'}</p>
             <p style="font-size: 0.68rem; opacity: 0.85;">${photo.size_bytes ? (photo.size_bytes / (1024*1024)).toFixed(1) + ' MB' : '4K Lossless'}</p>
           </div>
           <button class="photo-dl-btn" title="Download Clean Original Photo" onclick="event.stopPropagation(); GalleryManager.downloadSingleClean('${photo.url}', '${photo.original_name || 'photo_' + (index+1) + '.webp'}')">
@@ -53,12 +54,12 @@ const GalleryManager = {
       lightbox.className = 'modal-overlay active';
       lightbox.innerHTML = `
         <div style="position: relative; max-width: 90vw; max-height: 90vh; display: flex; flex-direction: column; align-items: center;">
-          <button onclick="GalleryManager.closeLightbox()" style="position: absolute; top: -40px; right: 0; color: #FFFFFF; font-size: 1.5rem;">✕</button>
+          <button onclick="GalleryManager.closeLightbox()" style="position: absolute; top: -40px; right: 0; color: #FFFFFF; font-size: 1.5rem; background: transparent; border: none; cursor: pointer;">✕</button>
           <img id="lightbox-main-img" style="max-height: 80vh; max-width: 85vw; object-fit: contain; border-radius: 4px; box-shadow: var(--shadow-xl);" src="" alt="Enlarged Photo">
-          <div style="display: flex; align-items: center; justify-content: space-between; width: 100%; margin-top: 1rem; color: #FFFFFF;">
-            <button onclick="GalleryManager.prevLightbox()" style="color: #FFF; font-size: 1.1rem; padding: 6px 14px; background: rgba(255,255,255,0.15); border-radius: 4px;">❮ Previous</button>
+          <div style="display: flex; align-items: center; justify-content: space-between; width: 100%; margin-top: 1rem; color: #FFFFFF; gap: 1rem;">
+            <button onclick="GalleryManager.prevLightbox()" style="color: #FFF; font-size: 0.95rem; padding: 6px 14px; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25); border-radius: 4px; cursor: pointer;">❮ Previous</button>
             <span id="lightbox-counter" style="font-size: 0.85rem; font-family: var(--font-mono);"></span>
-            <button onclick="GalleryManager.nextLightbox()" style="color: #FFF; font-size: 1.1rem; padding: 6px 14px; background: rgba(255,255,255,0.15); border-radius: 4px;">Next ❯</button>
+            <button onclick="GalleryManager.nextLightbox()" style="color: #FFF; font-size: 0.95rem; padding: 6px 14px; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25); border-radius: 4px; cursor: pointer;">Next ❯</button>
           </div>
         </div>
       `;
@@ -103,7 +104,7 @@ const GalleryManager = {
       id: 'log_' + Date.now(),
       email: userEmail,
       albumSlug: albumSlug,
-      event: eventName, // 'DOWNLOAD_SINGLE' or 'DOWNLOAD_ZIP' or 'VIEW_ALBUM'
+      event: eventName,
       photoName: photoName || 'Full Album ZIP',
       device: device,
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
@@ -111,12 +112,10 @@ const GalleryManager = {
       timestamp: Date.now()
     };
 
-    // Save in shared storage for Admin Dashboard
     const logs = JSON.parse(localStorage.getItem('photovault_access_logs') || '[]');
     logs.unshift(logEntry);
-    localStorage.setItem('photovault_access_logs', JSON.stringify(logs.slice(0, 100))); // Keep last 100
+    localStorage.setItem('photovault_access_logs', JSON.stringify(logs.slice(0, 100)));
 
-    // Send to backend API
     fetch('/api/stats', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -127,8 +126,6 @@ const GalleryManager = {
   // 1. Single Photo Clean Download (Zero Watermark on Photo + Logged in Admin)
   downloadSingleClean: async function(url, filename) {
     const cleanFilename = filename || 'wedding_photo.webp';
-    
-    // Silently log to admin
     this.recordDownloadLog('DOWNLOAD_SINGLE', cleanFilename);
 
     try {
@@ -143,16 +140,16 @@ const GalleryManager = {
       document.body.removeChild(link);
       URL.revokeObjectURL(blobUrl);
 
-      if (window.showToast) window.showToast(`Downloaded: ${cleanFilename}`);
+      if (window.showToast) window.showToast(`✓ Downloaded: ${cleanFilename}`);
     } catch (err) {
       window.open(url, '_blank');
     }
   },
 
-  // 2. Bulk ZIP Clean Download (Original Clean Photos in ZIP + Logged in Admin)
-  downloadAllZip: async function(albumTitle = 'wedding_monograph', progressCallback) {
+  // 2. Mobile-Safe Batched ZIP Download with Progress Feedback
+  downloadAllZip: async function(albumTitle = 'wedding_monograph') {
     if (typeof JSZip === 'undefined') {
-      alert('JSZip library loading. Please try in a moment.');
+      alert('JSZip library is still loading. Please try again in 5 seconds.');
       return;
     }
 
@@ -161,28 +158,42 @@ const GalleryManager = {
       return;
     }
 
-    if (window.showToast) window.showToast('Preparing clean high-res ZIP archive...');
+    const total = this.currentPhotos.length;
+    this.recordDownloadLog('DOWNLOAD_ZIP', `All ${total} Photos (ZIP Archive)`);
 
-    // Silently log bulk download to admin
-    this.recordDownloadLog('DOWNLOAD_ZIP', `All ${this.currentPhotos.length} Photos (ZIP Archive)`);
+    if (window.showToast) {
+      window.showToast(`📦 Packaging ${total} high-res photos into ZIP... Please wait.`);
+    }
 
     const zip = new JSZip();
     const folder = zip.folder(albumTitle.replace(/[^a-z0-9]/gi, '_').toLowerCase());
 
-    const total = this.currentPhotos.length;
-    for (let i = 0; i < total; i++) {
-      const photo = this.currentPhotos[i];
-      try {
-        if (progressCallback) progressCallback(i + 1, total);
-        const resp = await fetch(photo.url);
-        const blob = await resp.blob();
-        folder.file(`photo_${String(i + 1).padStart(3, '0')}.webp`, blob);
-      } catch (e) {
-        console.warn('Failed to fetch photo for zip:', photo.url, e);
-      }
+    // Batch download in small chunks of 3 to avoid browser memory exhaust on mobile
+    const BATCH_SIZE = 3;
+    for (let i = 0; i < total; i += BATCH_SIZE) {
+      const chunk = this.currentPhotos.slice(i, i + BATCH_SIZE);
+      await Promise.all(
+        chunk.map(async (photo, chunkIdx) => {
+          const actualIdx = i + chunkIdx;
+          try {
+            const resp = await fetch(photo.url);
+            const blob = await resp.blob();
+            folder.file(`photo_${String(actualIdx + 1).padStart(3, '0')}.webp`, blob);
+          } catch (e) {
+            console.warn('Failed to fetch photo for zip:', photo.url, e);
+          }
+        })
+      );
     }
 
-    const zipBlob = await zip.generateAsync({ type: 'blob' });
+    if (window.showToast) window.showToast('Compiling ZIP archive...');
+
+    const zipBlob = await zip.generateAsync({
+      type: 'blob',
+      compression: 'DEFLATE',
+      compressionOptions: { level: 6 }
+    });
+
     const blobUrl = URL.createObjectURL(zipBlob);
     const link = document.createElement('a');
     link.href = blobUrl;
@@ -192,7 +203,7 @@ const GalleryManager = {
     document.body.removeChild(link);
     URL.revokeObjectURL(blobUrl);
 
-    if (window.showToast) window.showToast('✓ Bulk clean ZIP download completed!');
+    if (window.showToast) window.showToast('✓ Full Album ZIP download completed!');
   },
 
   // Expiry Countdown Timer
@@ -201,7 +212,7 @@ const GalleryManager = {
     if (!el) return;
 
     if (!expiresAtIso || expiresAtIso === 'never' || expiresAtIso === '0') {
-      el.innerHTML = '<span style="color: var(--accent-emerald); font-weight: 700;">✨ PERMANENT ARCHIVE (NO EXPIRY)</span>';
+      el.innerHTML = '<span style="color: var(--accent-emerald); font-weight: 700;">✨ ACTIVE ARCHIVE</span>';
       return;
     }
 
