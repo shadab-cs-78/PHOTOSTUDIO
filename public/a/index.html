@@ -27,10 +27,7 @@
         <div id="logged-user-pill" style="display: none; background: var(--bg-secondary); border: 1px solid var(--border-subtle); border-radius: var(--radius-xs); padding: 4px 8px; font-size: 0.72rem;">
           👤 <span id="logged-email-text" style="font-weight: 600;">client@gmail.com</span>
         </div>
-        <button class="portal-badge-btn" onclick="QRUtil.shareWhatsApp(window.location.href, document.getElementById('album-title-text').innerText)">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
-          <span>Share</span>
-        </button>
+        
       </div>
     </div>
   </header>
@@ -59,10 +56,7 @@
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
             Copy Link
           </button>
-          <button class="btn-secondary" onclick="QRUtil.shareWhatsApp(window.location.href, document.getElementById('album-title-text').innerText)">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
-            Share on WhatsApp
-          </button>
+          
         </div>
       </div>
     </section>
@@ -77,51 +71,37 @@
 
   <!-- ==============================================================================
        SIGN IN WITH GOOGLE & 4-DIGIT PIN AUTHENTICATION MODAL
+  <!-- ==============================================================================
+       EXCLUSIVE 4-DIGIT PIN AUTHENTICATION MODAL
        ============================================================================== -->
   <div class="modal-overlay" id="verification-modal">
-    <div class="modal-dialog">
-      <div class="modal-header" style="text-align: center;">
+    <div class="modal-dialog" style="max-width: 400px; text-align: center;">
+      <div class="modal-header" style="text-align: center; margin-bottom: 1.25rem;">
         <div style="margin-bottom: 0.75rem;">
-          <img src="/assets/logo.png" alt="Katni Creation" style="height: 60px; width: 60px; border-radius: 50%; object-fit: cover; border: 2px solid #D4AF37; box-shadow: 0 4px 16px rgba(212,175,55,0.3); margin: 0 auto;">
+          <img src="/assets/logo.png" alt="Katni Creation" style="height: 64px; width: 64px; border-radius: 50%; object-fit: cover; border: 2px solid #D4AF37; box-shadow: 0 4px 16px rgba(212,175,55,0.35); margin: 0 auto;">
         </div>
-        <div class="modal-tag">PRIVATE WEDDING DELIVERY</div>
-        <h3 class="modal-title">Unlock Wedding Album</h3>
-        <p class="modal-subtitle">Photos dekhne aur download karne ke liye verify karein:</p>
+        <div class="modal-tag">🔒 PRIVATE WEDDING ARCHIVE</div>
+        <h3 class="modal-title" style="font-size: 1.35rem; margin-top: 4px;">Enter 4-Digit PIN</h3>
+        <p class="modal-subtitle" style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">
+          Wedding card ya WhatsApp invite me diya gaya 4-digit secret PIN enter karein:
+        </p>
       </div>
 
-      <!-- Real Google Sign In & 4-Digit PIN Options -->
-      <div style="display: flex; flex-direction: column; gap: 1rem;">
-        
-        <!-- Option 1: 4-Digit PIN (Fastest for Guests) -->
-        <form id="pin-unlock-form" onsubmit="event.preventDefault(); handlePinUnlock();" style="background: var(--bg-secondary); border: 1px solid var(--border-subtle); padding: 1.25rem; border-radius: var(--radius-xs); text-align: center;">
-          <label class="form-label" style="margin-bottom: 0.25rem;">Enter 4-Digit Wedding PIN</label>
-          <p style="font-size: 0.72rem; color: var(--text-muted); margin-bottom: 0.75rem;">
-            (Wedding Card ya WhatsApp message mein diya gaya PIN daalein)
-          </p>
-          <input type="text" id="wedding-pin-input" class="form-input" style="font-size: 1.4rem; letter-spacing: 6px; text-align: center; font-family: var(--font-mono); font-weight: 700; width: 160px; margin: 0 auto 0.75rem;" maxlength="4" placeholder="2 0 2 6" value="2026" required>
-          
-          <button type="submit" class="btn-primary" style="width: 100%; justify-content: center; padding: 10px;">
-            🔓 Unlock with PIN
-          </button>
-        </form>
-
-        <div style="text-align: center; font-size: 0.75rem; color: var(--text-muted); position: relative; margin: 0.25rem 0;">
-          <span>— YA PHIR GMAIL SE LOGIN KAREIN —</span>
+      <!-- 4-Digit PIN Form -->
+      <form id="pin-unlock-form" onsubmit="event.preventDefault(); handlePinUnlock();" style="display: flex; flex-direction: column; gap: 1rem;">
+        <div style="background: var(--bg-secondary); border: 1.5px solid #D4AF37; padding: 1.25rem; border-radius: var(--radius-xs); box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+          <input type="password" inputmode="numeric" pattern="[0-9]*" id="wedding-pin-input" class="form-input" style="font-size: 2rem; letter-spacing: 12px; text-align: center; font-family: var(--font-mono); font-weight: 700; width: 170px; margin: 0 auto; color: #D4AF37; background: #000; border: 1px solid rgba(212,175,55,0.4);" maxlength="4" placeholder="••••" required autofocus oninput="if(this.value.length === 4) handlePinUnlock();">
+          <div id="pin-error-msg" style="color: #E11D48; font-size: 0.75rem; font-weight: 600; margin-top: 8px; display: none;"></div>
         </div>
 
-        <!-- Option 2: Sign in with Gmail -->
-        <form id="gmail-signin-form" onsubmit="event.preventDefault(); handleGmailSignIn();">
-          <div class="form-group">
-            <label class="form-label">Aapka Gmail Address</label>
-            <input type="email" id="user-gmail-input" class="form-input" placeholder="e.g. rahul.sharma@gmail.com" required>
-          </div>
+        <button type="submit" id="btn-submit-pin" class="btn-primary" style="width: 100%; justify-content: center; padding: 12px; font-size: 0.95rem; letter-spacing: 0.05em;">
+          🔓 Unlock Gallery
+        </button>
 
-          <button type="submit" class="btn-secondary" style="width: 100%; justify-content: center; padding: 10px;">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" style="margin-right: 6px;"><path d="M12.48 10.9v3.26h5.86c-.25 1.58-1.84 4.63-5.86 4.63-3.53 0-6.42-2.9-6.42-6.49 0-3.58 2.89-6.48 6.42-6.48 2.01 0 3.36.86 4.13 1.6l2.58-2.5C17.55 3.3 15.22 2.3 12.48 2.3 7.02 2.3 2.6 6.72 2.6 12.18s4.42 9.88 9.88 9.88c5.71 0 9.5-4.01 9.5-9.67 0-.65-.07-1.14-.16-1.5z"/></svg>
-            Continue with Gmail
-          </button>
-        </form>
-      </div>
+        <p style="font-size: 0.7rem; color: var(--text-muted); margin-top: -0.25rem;">
+          Need assistance? Helpline: <strong style="color: var(--text-primary);">+91 6264220191</strong>
+        </p>
+      </form>
     </div>
   </div>
 
@@ -232,17 +212,22 @@
         syncPhotosSilently(false);
       }, 2500);
 
-      // Check saved unlock state
-      const savedEmail = localStorage.getItem('photovault_client_email');
+      // Check saved unlock state or URL PIN parameter
+      const urlPin = urlParams.get('pin');
       const isUnlocked = localStorage.getItem(`unlocked_${currentSlug}`);
 
-      if (savedEmail || isUnlocked) {
-        if (savedEmail) showUserPill(savedEmail);
+      if (urlPin) {
+        document.getElementById('wedding-pin-input').value = urlPin;
+        handlePinUnlock(true);
+      } else if (isUnlocked) {
         document.getElementById('verification-modal').classList.remove('active');
       } else {
         document.getElementById('verification-modal').classList.add('active');
+        setTimeout(() => {
+          const pinInp = document.getElementById('wedding-pin-input');
+          if (pinInp) pinInp.focus();
+        }, 300);
       }
-
     });
 
     // Toast notification utility
@@ -356,21 +341,23 @@
       GalleryManager.renderMasonry('masonry-gallery-container', albumPhotos);
     }
 
-    function showUserPill(email) {
-      document.getElementById('logged-user-pill').style.display = 'block';
-      document.getElementById('logged-email-text').innerText = email;
-    }
-
-    // Rate Limiting on PIN Unlocks (Brute Force Protection)
-    function handlePinUnlock() {
+    // Pure 4-Digit PIN Unlock Controller (with Brute-Force Rate Limiting)
+    function handlePinUnlock(isSilent = false) {
       const lockoutKey = `pin_lockout_${currentSlug}`;
       const attemptsKey = `pin_attempts_${currentSlug}`;
+      const errorDiv = document.getElementById('pin-error-msg');
       const lockedUntil = parseInt(localStorage.getItem(lockoutKey) || '0', 10);
       const now = Date.now();
 
       if (now < lockedUntil) {
         const remSecs = Math.ceil((lockedUntil - now) / 1000);
-        alert(`Too many incorrect attempts. Please wait ${remSecs}s before trying again.`);
+        const msg = `⚠️ Too many attempts. Wait ${remSecs}s before trying again.`;
+        if (errorDiv) {
+          errorDiv.innerText = msg;
+          errorDiv.style.display = 'block';
+        } else if (!isSilent) {
+          alert(msg);
+        }
         return;
       }
 
@@ -382,31 +369,31 @@
         localStorage.removeItem(lockoutKey);
         localStorage.setItem(`unlocked_${currentSlug}`, 'true');
         document.getElementById('verification-modal').classList.remove('active');
-        if (window.showToast) window.showToast('✓ Album Unlocked! Enjoy the photos.');
+        if (errorDiv) errorDiv.style.display = 'none';
+        if (window.showToast) window.showToast('✓ Album Unlocked! Enjoy the gallery.');
       } else {
         let attempts = parseInt(localStorage.getItem(attemptsKey) || '0', 10) + 1;
         localStorage.setItem(attemptsKey, attempts.toString());
 
         if (attempts >= 5) {
-          const lockTime = Date.now() + 3 * 60 * 1000; // 3 minute lock
+          const lockTime = Date.now() + 3 * 60 * 1000;
           localStorage.setItem(lockoutKey, lockTime.toString());
-          alert('Galat PIN! 5 failed attempts. Please wait 3 minutes or continue with Gmail.');
+          const lockMsg = '❌ 5 failed attempts! Locked for 3 minutes for security.';
+          if (errorDiv) {
+            errorDiv.innerText = lockMsg;
+            errorDiv.style.display = 'block';
+          } else if (!isSilent) {
+            alert(lockMsg);
+          }
         } else {
-          alert(`Galat PIN! (${5 - attempts} attempts remaining). Kripya sahi 4-digit PIN enter karein.`);
+          const warnMsg = `❌ Incorrect PIN (${5 - attempts} attempts left). Please check your invite.`;
+          if (errorDiv) {
+            errorDiv.innerText = warnMsg;
+            errorDiv.style.display = 'block';
+          } else if (!isSilent) {
+            alert(warnMsg);
+          }
         }
-      }
-    }
-
-    function handleGmailSignIn() {
-      const email = document.getElementById('user-gmail-input').value.trim();
-      if (email && email.includes('@')) {
-        localStorage.setItem('photovault_client_email', email);
-        localStorage.setItem(`unlocked_${currentSlug}`, 'true');
-        showUserPill(email);
-        document.getElementById('verification-modal').classList.remove('active');
-        if (window.showToast) window.showToast(`✓ Welcome ${email}!`);
-      } else {
-        alert('Kripya valid Gmail address enter karein.');
       }
     }
   </script>
