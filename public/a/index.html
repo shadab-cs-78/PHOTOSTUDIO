@@ -51,13 +51,7 @@
           <span>EXPIRY: <strong>Active</strong></span>
         </div>
 
-        <div class="gallery-btn-row">
-          <button class="btn-primary" onclick="QRUtil.copyToClipboard(window.location.href)">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-            Copy Link
-          </button>
-          
-        </div>
+        
       </div>
     </section>
 
@@ -104,6 +98,17 @@
       </form>
     </div>
   </div>
+
+  <!-- FLOATING LUXURY AMBIENT AUDIO PLAYER (MUTE / UNMUTE ANYTIME) -->
+  <div id="ambient-music-widget" class="ambient-music-pill">
+    <button id="music-toggle-btn" class="music-pill-btn" onclick="toggleAmbientMusic()" title="Click to Play / Mute Background Wedding Melody">
+      <div class="music-equalizer active" id="music-equalizer">
+        <span></span><span></span><span></span><span></span>
+      </div>
+      <span id="music-label-text" class="music-label">🎵 Wedding Melody</span>
+    </button>
+  </div>
+  <audio id="ambient-audio-player" loop preload="auto" src="https://assets.mixkit.co/music/preview/mixkit-wedding-waltz-149.mp3"></audio>
 
   <!-- FOOTER -->
   <footer class="site-footer">
@@ -371,6 +376,11 @@
         document.getElementById('verification-modal').classList.remove('active');
         if (errorDiv) errorDiv.style.display = 'none';
         if (window.showToast) window.showToast('✓ Album Unlocked! Enjoy the gallery.');
+        
+        // Start soft background melody upon unlocking
+        if (localStorage.getItem('photovault_music_enabled') !== 'false') {
+          playAmbientMusic();
+        }
       } else {
         let attempts = parseInt(localStorage.getItem(attemptsKey) || '0', 10) + 1;
         localStorage.setItem(attemptsKey, attempts.toString());
@@ -396,6 +406,75 @@
         }
       }
     }
+
+    // 🎵 AMBIENT WEDDING MUSIC CONTROLLER
+    let isMusicPlaying = false;
+    const audioPlayer = document.getElementById('ambient-audio-player');
+    const musicBtn = document.getElementById('music-toggle-btn');
+    const musicEq = document.getElementById('music-equalizer');
+    const musicLabel = document.getElementById('music-label-text');
+
+    function initAmbientMusic() {
+      if (!audioPlayer) return;
+      audioPlayer.volume = 0.28;
+
+      const userPref = localStorage.getItem('photovault_music_enabled');
+      if (userPref === 'false') {
+        setMusicState(false);
+      } else {
+        const startOnInteraction = () => {
+          if (localStorage.getItem('photovault_music_enabled') !== 'false' && !isMusicPlaying) {
+            playAmbientMusic();
+          }
+        };
+        document.addEventListener('click', startOnInteraction, { once: true });
+        document.addEventListener('touchstart', startOnInteraction, { once: true });
+      }
+    }
+
+    function playAmbientMusic() {
+      if (!audioPlayer) return;
+      audioPlayer.play().then(() => {
+        setMusicState(true);
+      }).catch(() => {
+        setMusicState(false);
+      });
+    }
+
+    function pauseAmbientMusic() {
+      if (!audioPlayer) return;
+      audioPlayer.pause();
+      setMusicState(false);
+    }
+
+    function toggleAmbientMusic() {
+      if (isMusicPlaying) {
+        pauseAmbientMusic();
+        localStorage.setItem('photovault_music_enabled', 'false');
+        if (window.showToast) window.showToast('🔇 Background Music: OFF');
+      } else {
+        playAmbientMusic();
+        localStorage.setItem('photovault_music_enabled', 'true');
+        if (window.showToast) window.showToast('🎵 Background Music: ON');
+      }
+    }
+
+    function setMusicState(playing) {
+      isMusicPlaying = playing;
+      if (!musicBtn || !musicEq || !musicLabel) return;
+      if (playing) {
+        musicBtn.classList.remove('muted');
+        musicEq.classList.add('active');
+        musicLabel.innerText = '🎵 Wedding Melody';
+      } else {
+        musicBtn.classList.add('muted');
+        musicEq.classList.remove('active');
+        musicLabel.innerText = '🔇 Music OFF';
+      }
+    }
+
+    // Initialize music player on load
+    initAmbientMusic();
   </script>
 </body>
 </html>
