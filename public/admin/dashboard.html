@@ -125,39 +125,6 @@
             </tr>
           </tbody>
         </table>
-      </div>
-    </div>
-
-    <!-- 🛡️ REAL-TIME PHOTO DOWNLOAD & ACCESS SURVEILLANCE LOGS -->
-    <div class="admin-card">
-      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem;">
-        <div>
-          <h3 class="modal-title" style="font-size: 1.35rem;">🛡️ Live Photo Download Surveillance & Audit Trail</h3>
-          <p style="font-size: 0.78rem; color: var(--text-secondary);">
-            Tracks exactly which Gmail user downloaded which specific photo for complete misuse traceability.
-          </p>
-        </div>
-        <button class="btn-secondary" onclick="renderLiveAuditLogs()" style="font-size: 0.7rem; padding: 6px 12px;">
-          🔄 Refresh Logs
-        </button>
-      </div>
-
-      <div style="overflow-x: auto;">
-        <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.78rem;">
-          <thead>
-            <tr style="border-bottom: 1px solid var(--border-subtle); color: var(--text-muted); font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.12em;">
-              <th style="padding: 8px 10px;">Timestamp</th>
-              <th style="padding: 8px 10px;">User Gmail Address</th>
-              <th style="padding: 8px 10px;">Action Event</th>
-              <th style="padding: 8px 10px;">Specific Photo / Asset Downloaded</th>
-              <th style="padding: 8px 10px;">Device / Browser</th>
-            </tr>
-          </thead>
-          <tbody id="live-audit-table-body">
-            <!-- Rendered dynamically -->
-          </tbody>
-        </table>
-      </div>
     </div>
 
     <!-- CODENOVA DEVELOPER BRANDING -->
@@ -298,46 +265,11 @@
             const supaDisplay = supaGB >= 1 ? `${supaGB.toFixed(2)} GB` : `${supaMB.toFixed(1)} MB`;
             document.getElementById('supa-storage-text').innerText = `${supaDisplay} / 1.0 GB`;
             document.getElementById('supa-storage-bar').style.width = `${Math.min(100, Math.max(1, s.supabase.percent || 0))}%`;
-            document.getElementById('supa-storage-sub').innerText = `${(1.0 - supaGB).toFixed(2)} GB Free • Zero Card`;
           }
-        }
-
-        if (data && Array.isArray(data.logs) && data.logs.length > 0) {
-          renderLiveAuditLogs(data.logs);
         }
       } catch (err) {
         console.warn('Could not fetch storage stats:', err);
       }
-    }
-
-    function renderLiveAuditLogs(serverLogs) {
-      const tbody = document.getElementById('live-audit-table-body');
-      const localLogs = JSON.parse(localStorage.getItem('photovault_access_logs') || '[]');
-      
-      let allLogs = [];
-      if (Array.isArray(serverLogs) && serverLogs.length > 0) {
-        allLogs = serverLogs;
-      } else if (localLogs.length > 0) {
-        allLogs = localLogs;
-      } else {
-        allLogs = [
-          { time: 'System Ready', email: 'verified.client@gmail.com', event: 'PORTAL_ACTIVE', photoName: 'Audit surveillance logging active', device: 'Katni Server' }
-        ];
-      }
-
-      tbody.innerHTML = allLogs.map(log => `
-        <tr style="border-bottom: 1px solid var(--border-subtle);">
-          <td style="padding: 10px; color: var(--text-muted); font-family: var(--font-mono); font-size: 0.72rem;">${log.time || log.created_at || 'Just now'}</td>
-          <td style="padding: 10px; font-weight: 700; color: var(--text-primary); font-family: var(--font-mono);">${log.email || 'guest@gmail.com'}</td>
-          <td style="padding: 10px;">
-            <span class="chip-tag" style="${log.event === 'DOWNLOAD_ZIP' ? 'background: #D1FAE5; color: #065F46;' : 'background: #FEF3C7; color: #92400E;'}">
-              ${log.event || 'DOWNLOAD'}
-            </span>
-          </td>
-          <td style="padding: 10px; font-weight: 600; color: #333;">${log.photoName || log.photo_name || 'monograph.webp'}</td>
-          <td style="padding: 10px; color: var(--text-muted);">${log.device || 'Mobile Browser'}</td>
-        </tr>
-      `).join('');
     }
 
     document.addEventListener('DOMContentLoaded', () => {
