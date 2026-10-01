@@ -2,7 +2,7 @@
  * PHOTOVAULT - Clean Client Photo Delivery & Silent Admin Audit Trail
  * Photos are 100% CLEAN (No visible watermarks).
  * Every download is silently logged in the Admin Dashboard with User Gmail, Photo Name, and Timestamp.
- * Includes batch streaming JSZip download to prevent mobile browser memory crashes.
+ * Includes precise live client expiry countdown and automated expired state protection.
  */
 
 const GalleryManager = {
@@ -14,6 +14,8 @@ const GalleryManager = {
     this.currentPhotos = photos;
     const container = document.getElementById(containerId);
     if (!container) return;
+
+    if (container.dataset.expiredSet === 'true') return;
 
     if (photos.length === 0) {
       container.innerHTML = `
@@ -91,7 +93,7 @@ const GalleryManager = {
 
   // 📝 SILENT AUDIT LOGGER (Records directly to Admin Dashboard)
   recordDownloadLog: function(eventName, photoName) {
-    const userEmail = localStorage.getItem('photovault_client_email') || 'anonymous.guest@gmail.com';
+    const userEmail = localStorage.getItem('photovault_client_email') || 'client.guest@katnicreation.com';
     const albumSlug = (typeof currentSlug !== 'undefined') ? currentSlug : 'wedding-album';
     
     // Detect simple device
@@ -105,7 +107,7 @@ const GalleryManager = {
       email: userEmail,
       albumSlug: albumSlug,
       event: eventName,
-      photoName: photoName || 'Full Album ZIP',
+      photoName: photoName || 'Wedding Photo',
       device: device,
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       date: new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }),
@@ -146,35 +148,96 @@ const GalleryManager = {
     }
   },
 
-  // Expiry Countdown Timer
-  startExpiryCountdown: function(elementId, expiresAtIso) {
+  // Expiry Countdown Timer & Client Access Controller
+  startExpiryCountdown: function(elementId, expiresAtIso, createdAtIso) {
     const el = document.getElementById(elementId);
     if (!el) return;
 
-    if (!expiresAtIso || expiresAtIso === 'never' || expiresAtIso === '0') {
-      el.innerHTML = '<span style="color: var(--accent-emerald); font-weight: 700;">✨ ACTIVE ARCHIVE</span>';
-      return;
+    // Fallback if expires_at is not explicitly provided: compute 7 days from created_at or now
+    let targetIso = expiresAtIso;
+    if (!targetIso || targetIso === 'never' || targetIso === '0') {
+      const baseTime = createdAtIso ? new Date(createdAtIso).getTime() : Date.now();
+      targetIso = new Date(baseTime + 7 * 86400000).toISOString();
     }
 
+    const expiryDateObj = new Date(targetIso);
+    const dateFormatted = expiryDateObj.toLocaleDateString('en-IN', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric'
+    });
+    const timeFormatted = expiryDateObj.toLocaleTimeString('en-IN', {
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+
     function update() {
-      const diff = new Date(expiresAtIso).getTime() - new Date().getTime();
+      const now = Date.now();
+      const diff = expiryDateObj.getTime() - now;
+
       if (diff <= 0) {
-        el.innerHTML = '<span style="color: var(--accent-rose); font-weight: 700;">⚠️ ARCHIVE EXPIRED</span>';
+        el.className = 'countdown-timer-box expired';
+        el.innerHTML = `
+          <div style="display: flex; align-items: center; justify-content: space-between; width: 100%; flex-wrap: wrap; gap: 8px;">
+            <div style="display: flex; align-items: center; gap: 8px; color: #E11D48; font-weight: 700;">
+              <span>⚠️ ACCESS EXPIRED</span>
+              <span style="font-size: 0.72rem; opacity: 0.9;">(Cycle ended on ${dateFormatted})</span>
+            </div>
+            <span style="font-size: 0.68rem; color: #E11D48; font-weight: 600;">Photos Archived</span>
+          </div>
+        `;
+
+        // If gallery is active, show expired notice
+        const galleryGrid = document.getElementById('masonry-gallery-container');
+        if (galleryGrid && (!galleryGrid.dataset.expiredSet)) {
+          galleryGrid.dataset.expiredSet = "true";
+          galleryGrid.innerHTML = `
+            <div style="grid-column: 1 / -1; text-align: center; padding: 4rem 1.5rem; background: var(--bg-card); border: 1.5px solid rgba(225,29,72,0.3); border-radius: var(--radius-xs); margin: 2rem 0;">
+              <div style="font-size: 2.5rem; margin-bottom: 0.75rem;">⏳</div>
+              <h2 style="font-family: var(--font-serif); font-size: 1.6rem; color: #E11D48; margin-bottom: 0.5rem;">This Album Delivery Cycle Has Expired</h2>
+              <p style="font-size: 0.85rem; color: var(--text-secondary); max-width: 500px; margin: 0 auto 1.5rem;">
+                As per studio archival policy, this private wedding gallery was scheduled for automatic storage cleanup on <strong>${dateFormatted}</strong>.
+              </p>
+              <a href="https://wa.me/916264220191?text=Hello%20The%20Katni%20Creation,%20my%20wedding%20album%20access%20expired%20and%20I%20need%20a%20re-upload." target="_blank" class="btn-primary" style="display: inline-flex; justify-content: center; padding: 10px 20px;">
+                💬 Contact Studio for Re-Activation (+91 6264220191)
+              </a>
+            </div>
+          `;
+        }
         return;
       }
+
       const days = Math.floor(diff / (1000 * 60 * 60 * 24));
       const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
       const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-      
-      let timeStr = '';
-      if (days > 0) timeStr += `${days}d `;
-      timeStr += `${hours}h ${mins}m`;
+      const secs = Math.floor((diff % (1000 * 60)) / 1000);
 
-      el.innerHTML = `<span>EXPIRY IN: <strong style="color: #E11D48; font-family: var(--font-mono);">${timeStr}</strong></span>`;
+      let countdownBadge = '';
+      if (days > 0) countdownBadge += `<strong style="color: #E11D48; font-family: var(--font-mono);">${days}d</strong> `;
+      countdownBadge += `<strong style="color: #E11D48; font-family: var(--font-mono);">${hours}h ${mins}m ${secs}s</strong>`;
+
+      const isUrgent = diff < 24 * 60 * 60 * 1000;
+
+      el.innerHTML = `
+        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; width: 100%;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 0.95rem;">⏳</span>
+            <span>ACCESS VALIDITY: ${countdownBadge}</span>
+          </div>
+          <div style="font-size: 0.72rem; color: var(--text-muted); font-weight: 500;">
+            Auto-Purges on <strong style="color: var(--text-primary); font-family: var(--font-mono);">${dateFormatted} (${timeFormatted})</strong>
+          </div>
+        </div>
+      `;
+
+      if (isUrgent) {
+        el.style.border = '1px solid rgba(225, 29, 72, 0.4)';
+        el.style.background = 'rgba(225, 29, 72, 0.08)';
+      }
     }
 
     update();
-    setInterval(update, 60000);
+    setInterval(update, 1000);
   }
 };
 
