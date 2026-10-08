@@ -179,12 +179,13 @@ const server = http.createServer(async (req, res) => {
     if (req.method === 'POST') {
       const body = await readBody(req);
       const { album_slug, url, thumbnail_url, original_name, provider = 'cloudinary', size_bytes = 0 } = body;
+      const isBase64 = url && url.startsWith('data:');
 
       const newPhoto = {
         id: 'photo_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
         album_slug: album_slug,
         url: url,
-        thumbnail_url: thumbnail_url || url,
+        thumbnail_url: isBase64 ? '' : (thumbnail_url || url),
         original_name: original_name || 'photo.webp',
         provider: provider,
         size_bytes: size_bytes,
@@ -217,11 +218,12 @@ const server = http.createServer(async (req, res) => {
     else if (storage_strategy === 'cloudinary_imagekit') provider = Math.random() < 0.5 ? 'cloudinary' : 'imagekit';
 
     const url = image_base64 || 'https://images.unsplash.com/photo-1583939003579-730e3918a45a?auto=format&fit=crop&w=1600&q=85';
+    const isBase64 = url && url.startsWith('data:');
     const result = {
       success: true,
       provider: provider,
       url: url,
-      thumbnail_url: url,
+      thumbnail_url: isBase64 ? '' : url,
       size_bytes: size_bytes || 400000
     };
 

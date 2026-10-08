@@ -177,6 +177,50 @@
       }
     }
 
+    // IndexedDB High-Capacity Browser Cache (Supports 1GB+ of photos across Admin & Client tabs)
+    function openPhotoVaultIDB() {
+      return new Promise((resolve, reject) => {
+        if (!window.indexedDB) return resolve(null);
+        const req = indexedDB.open('PhotoVaultDB', 1);
+        req.onupgradeneeded = (e) => {
+          const db = e.target.result;
+          if (!db.objectStoreNames.contains('album_photos')) {
+            db.createObjectStore('album_photos');
+          }
+        };
+        req.onsuccess = (e) => resolve(e.target.result);
+        req.onerror = () => resolve(null);
+      });
+    }
+
+    async function idbGetPhotos(slug) {
+      try {
+        const db = await openPhotoVaultIDB();
+        if (!db) return [];
+        return await new Promise((resolve) => {
+          const tx = db.transaction('album_photos', 'readonly');
+          const req = tx.objectStore('album_photos').get(slug);
+          req.onsuccess = () => resolve(Array.isArray(req.result) ? req.result : []);
+          req.onerror = () => resolve([]);
+        });
+      } catch (e) {
+        return [];
+      }
+    }
+
+    async function idbSavePhotos(slug, photosArray) {
+      try {
+        const db = await openPhotoVaultIDB();
+        if (!db) return;
+        await new Promise((resolve) => {
+          const tx = db.transaction('album_photos', 'readwrite');
+          tx.objectStore('album_photos').put(photosArray, slug);
+          tx.oncomplete = () => resolve();
+          tx.onerror = () => resolve();
+        });
+      } catch (e) {}
+    }
+
     async function loadRealPhotos() {
       const grid = document.getElementById('manage-photos-grid');
       grid.innerHTML = '<p style="color: var(--text-muted); font-size: 0.8rem; padding: 1rem;">Loading photos...</p>';
@@ -193,13 +237,23 @@
         console.warn('API error, reading local photos:', err);
       }
 
-      // Merge with local photos cache
-      const localCache = JSON.parse(localStorage.getItem(`photos_${currentSlug}`) || '[]');
-      localCache.forEach(lp => {
-        if (!realPhotos.some(p => p.id === lp.id)) {
-          realPhotos.push(lp);
+      // Merge with IndexedDB high-capacity cache
+      const idbCache = await idbGetPhotos(currentSlug);
+      idbCache.forEach(ip => {
+        if (!realPhotos.some(p => p.id === ip.id)) {
+          realPhotos.push(ip);
         }
       });
+
+      // Merge with localStorage cache
+      try {
+        const localCache = JSON.parse(localStorage.getItem(`photos_${currentSlug}`) || '[]');
+        localCache.forEach(lp => {
+          if (!realPhotos.some(p => p.id === lp.id)) {
+            realPhotos.push(lp);
+          }
+        });
+      } catch (e) {}
 
       renderPhotoGrid();
     }
@@ -246,28 +300,39 @@
       } catch (e) {}
 
       realPhotos.splice(index, 1);
-      try {
-        localStorage.setItem(`photos_${currentSlug}`, JSON.stringify(realPhotos.slice(0, 60)));
-      } catch (e) {}
+      await safeCachePhotos(currentSlug, realPhotos);
       renderPhotoGrid();
       showToast('Photo removed from album.');
     }
 
-    // Safe LocalStorage Helper (Prevents QuotaExceededError crashes)
-    function safeCachePhotos(slug, photosArray) {
-      try {
-        // Only cache lightweight records (avoid caching huge raw base64 strings if > 15 items)
-        const compactList = photosArray.slice(0, 50).map(p => {
-          if (p.url && p.url.startsWith('data:image') && photosArray.length > 8) {
-            return null;
-          }
-          return p;
-        }).filter(Boolean);
-        localStorage.setItem(`photos_${slug}`, JSON.stringify(compactList));
-        localStorage.setItem('photovault_last_upload', Date.now().toString());
-      } catch (quotaErr) {
-        console.warn('LocalStorage quota full, relying on cloud database:', quotaErr);
+    // Safe Multi-Tier Browser Cache Helper (IndexedDB 1GB+ & Progressive LocalStorage)
+    async function safeCachePhotos(slug, photosArray) {
+      // 1. Always save 100% of photos into IndexedDB (no 5MB limit!)
+      await idbSavePhotos(slug, photosArray);
+
+      // 2. Optimize records (never duplicate base64 into thumbnail_url)
+      const compactList = photosArray.map(p => {
+        if (p.url && p.url.startsWith('data:')) {
+          return { ...p, thumbnail_url: '' };
+        }
+        return p;
+      });
+
+      // 3. Progressively fit as many photos as possible into localStorage without throwing QuotaExceededError
+      let maxItems = Math.min(compactList.length, 60);
+      while (maxItems >= 0) {
+        try {
+          localStorage.setItem(`photos_${slug}`, JSON.stringify(compactList.slice(0, maxItems)));
+          break;
+        } catch (quotaErr) {
+          if (maxItems <= 1) break;
+          maxItems = Math.floor(maxItems / 2);
+        }
       }
+
+      try {
+        localStorage.setItem('photovault_last_upload', Date.now().toString());
+      } catch (e) {}
     }
 
     // Single Photo Fast Compress + Atomic Upload Worker (with automatic retry)
@@ -311,15 +376,39 @@
         throw new Error('Upload failed after retry');
       }
 
-      const savedPhoto = uploadResult.photo || {
-        id: 'photo_' + Date.now() + '_' + index,
-        album_slug: currentSlug,
-        url: uploadResult.url || base64Data,
-        thumbnail_url: uploadResult.thumbnail_url || uploadResult.url || base64Data,
-        original_name: outFilename,
-        provider: uploadResult.provider || 'cloudinary',
-        size_bytes: uploadResult.size_bytes || compressedBytes
-      };
+      const finalUrl = uploadResult.url || base64Data;
+      const isBase64 = finalUrl && finalUrl.startsWith('data:');
+
+      let savedPhoto = uploadResult.photo;
+      if (!savedPhoto) {
+        const photoPayload = {
+          album_slug: currentSlug,
+          url: finalUrl,
+          thumbnail_url: isBase64 ? '' : (uploadResult.thumbnail_url || finalUrl),
+          original_name: outFilename,
+          provider: uploadResult.provider || 'cloudinary',
+          size_bytes: uploadResult.size_bytes || compressedBytes
+        };
+        try {
+          const dbResp = await fetch('/api/photos', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(photoPayload)
+          });
+          if (dbResp.ok) {
+            const dbData = await dbResp.json();
+            savedPhoto = dbData.photo;
+          }
+        } catch (e) {}
+
+        if (!savedPhoto) {
+          savedPhoto = {
+            id: 'photo_' + Date.now() + '_' + index,
+            ...photoPayload,
+            uploaded_at: new Date().toISOString()
+          };
+        }
+      }
 
       return savedPhoto;
     }
@@ -364,7 +453,7 @@
             realPhotos.unshift(savedPhoto);
             uploadedCount++;
             renderPhotoGrid();
-            safeCachePhotos(currentSlug, realPhotos);
+            await safeCachePhotos(currentSlug, realPhotos);
 
             // Broadcast live update to client gallery
             if (typeof BroadcastChannel !== 'undefined') {

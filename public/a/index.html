@@ -187,11 +187,43 @@
     let currentAlbum = null;
     let albumPhotos = [];
 
+    // IndexedDB High-Capacity Browser Cache Reader
+    function openPhotoVaultIDB() {
+      return new Promise((resolve) => {
+        if (!window.indexedDB) return resolve(null);
+        const req = indexedDB.open('PhotoVaultDB', 1);
+        req.onupgradeneeded = (e) => {
+          const db = e.target.result;
+          if (!db.objectStoreNames.contains('album_photos')) {
+            db.createObjectStore('album_photos');
+          }
+        };
+        req.onsuccess = (e) => resolve(e.target.result);
+        req.onerror = () => resolve(null);
+      });
+    }
+
+    async function idbGetPhotos(slug) {
+      try {
+        const db = await openPhotoVaultIDB();
+        if (!db) return [];
+        return await new Promise((resolve) => {
+          const tx = db.transaction('album_photos', 'readonly');
+          const req = tx.objectStore('album_photos').get(slug);
+          req.onsuccess = () => resolve(Array.isArray(req.result) ? req.result : []);
+          req.onerror = () => resolve([]);
+        });
+      } catch (e) {
+        return [];
+      }
+    }
+
     document.addEventListener('DOMContentLoaded', async () => {
-      // Determine slug from URL
+      // Determine slug from URL safely (ignore 'index.html')
       const pathParts = window.location.pathname.split('/').filter(Boolean);
       const urlParams = new URLSearchParams(window.location.search);
-      currentSlug = urlParams.get('slug') || (pathParts.length > 1 ? pathParts[1] : 'alia-ranbir');
+      const pathSlug = (pathParts.length > 1 && pathParts[1] !== 'index.html') ? pathParts[1] : null;
+      currentSlug = urlParams.get('slug') || pathSlug || 'alia-ranbir';
 
       await loadRealAlbumData();
 
@@ -276,20 +308,30 @@
 
     async function syncPhotosSilently(notify = false) {
       try {
-        const photoResp = await fetch(`/api/photos?slug=${currentSlug}`);
-        const photoData = await photoResp.json();
         let freshPhotos = [];
-        if (photoData && Array.isArray(photoData.photos)) {
-          freshPhotos = photoData.photos;
-        } else if (Array.isArray(photoData)) {
-          freshPhotos = photoData;
-        }
+        try {
+          const photoResp = await fetch(`/api/photos?slug=${currentSlug}`);
+          const photoData = await photoResp.json();
+          if (photoData && Array.isArray(photoData.photos)) {
+            freshPhotos = photoData.photos;
+          } else if (Array.isArray(photoData)) {
+            freshPhotos = photoData;
+          }
+        } catch (netErr) {}
 
-        // Merge with local storage
-        const localPhotos = JSON.parse(localStorage.getItem(`photos_${currentSlug}`) || '[]');
-        localPhotos.forEach(lp => {
-          if (!freshPhotos.some(p => p.id === lp.id)) freshPhotos.push(lp);
+        // Merge with IndexedDB high-capacity cache
+        const idbPhotos = await idbGetPhotos(currentSlug);
+        idbPhotos.forEach(ip => {
+          if (!freshPhotos.some(p => p.id === ip.id)) freshPhotos.push(ip);
         });
+
+        // Merge with localStorage
+        try {
+          const localPhotos = JSON.parse(localStorage.getItem(`photos_${currentSlug}`) || '[]');
+          localPhotos.forEach(lp => {
+            if (!freshPhotos.some(p => p.id === lp.id)) freshPhotos.push(lp);
+          });
+        } catch (e) {}
 
         // Check if there are new photos
         const currentIds = new Set(albumPhotos.map(p => p.id || p.url));
@@ -298,6 +340,8 @@
         if (hasNew) {
           const addedCount = freshPhotos.length - albumPhotos.length;
           albumPhotos = freshPhotos;
+          const container = document.getElementById('masonry-gallery-container');
+          if (container) delete container.dataset.expiredSet;
           GalleryManager.renderMasonry('masonry-gallery-container', albumPhotos);
           if (notify && window.showToast) {
             window.showToast(`✨ ${addedCount > 0 ? addedCount : 'New'} photo(s) added live!`);
@@ -329,14 +373,7 @@
         }
       }
 
-      // Initialize Expiry Countdown
-      if (currentAlbum) {
-        GalleryManager.startExpiryCountdown('expiry-countdown-box', currentAlbum.expires_at, currentAlbum.created_at);
-      } else {
-        GalleryManager.startExpiryCountdown('expiry-countdown-box', null, null);
-      }
-
-      // 2. Fetch Album Photos
+      // 2. Fetch Album Photos (API + IndexedDB + LocalStorage)
       try {
         const photoResp = await fetch(`/api/photos?slug=${currentSlug}`);
         const photoData = await photoResp.json();
@@ -345,15 +382,36 @@
         }
       } catch (e) {}
 
-      // Merge with local photos
-      const localPhotos = JSON.parse(localStorage.getItem(`photos_${currentSlug}`) || '[]');
-      localPhotos.forEach(lp => {
-        if (!albumPhotos.some(p => p.id === lp.id)) {
-          albumPhotos.push(lp);
+      // Merge with IndexedDB high-capacity cache
+      const idbPhotos = await idbGetPhotos(currentSlug);
+      idbPhotos.forEach(ip => {
+        if (!albumPhotos.some(p => p.id === ip.id)) {
+          albumPhotos.push(ip);
         }
       });
 
-      // Render Masonry
+      // Merge with localStorage photos
+      try {
+        const localPhotos = JSON.parse(localStorage.getItem(`photos_${currentSlug}`) || '[]');
+        localPhotos.forEach(lp => {
+          if (!albumPhotos.some(p => p.id === lp.id)) {
+            albumPhotos.push(lp);
+          }
+        });
+      } catch (e) {}
+
+      // 3. Initialize Expiry Countdown (if newly uploaded photos exist on an older demo album, ensure active window)
+      if (currentAlbum) {
+        let effectiveExpiry = currentAlbum.expires_at;
+        if (effectiveExpiry && new Date(effectiveExpiry).getTime() <= Date.now() && albumPhotos.length > 0) {
+          effectiveExpiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+        }
+        GalleryManager.startExpiryCountdown('expiry-countdown-box', effectiveExpiry, currentAlbum.created_at);
+      } else {
+        GalleryManager.startExpiryCountdown('expiry-countdown-box', null, null);
+      }
+
+      // 4. Render Masonry
       GalleryManager.renderMasonry('masonry-gallery-container', albumPhotos);
     }
 

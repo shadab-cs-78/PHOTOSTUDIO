@@ -20,9 +20,9 @@ export function getAppConfig() {
   return {
     supabase: {
       url: config.supabase?.url || process.env.SUPABASE_URL || 'https://mock.supabase.co',
-      anonKey: config.supabase?.anon || process.env.SUPABASE_ANON_KEY || 'mock-anon',
-      serviceKey: config.supabase?.service || process.env.SUPABASE_SERVICE_ROLE_KEY || 'mock-service',
-      bucket: config.supabase?.bucket || process.env.SUPABASE_BUCKET || 'wedding-photos'
+      anonKey: config.supabase?.anon || process.env.SUPABASE_ANON_KEY || '',
+      serviceKey: config.supabase?.service || process.env.SUPABASE_SERVICE_ROLE_KEY || '',
+      bucket: config.supabase?.bucket || process.env.SUPABASE_BUCKET || 'photos'
     },
     cloudinary: {
       cloudName: config.cloudinary?.cloudName || process.env.CLOUDINARY_CLOUD_NAME || '',
