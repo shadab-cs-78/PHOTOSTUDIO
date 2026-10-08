@@ -250,15 +250,15 @@ export default async function handler(req, res) {
       if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
       const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body || {};
-      const { filename, album_slug, image_base64, size_bytes, storage_strategy = 'auto' } = body;
+      const { filename, album_slug, image_base64, size_bytes, storage_strategy = 'auto', save_to_db = false } = body;
 
-      const cleanFilename = (filename || `photo_${Date.now()}.webp`).replace(/[^a-zA-Z0-9._-]/g, '_');
+      const cleanFilename = `${Date.now()}_${(filename || 'photo.webp').replace(/[^a-zA-Z0-9._-]/g, '_')}`;
 
-      // Helper for Cloudinary Upload
+      // 1. Helper for Cloudinary Upload (25GB Free)
       async function tryCloudinary() {
         if (!config.cloudinary.cloudName || !config.cloudinary.apiKey || !config.cloudinary.apiSecret || !image_base64) return null;
         try {
-          const timestamp = Math.round(new Date().getTime() / 1000);
+          const timestamp = Math.round(Date.now() / 1000);
           const folder = `thekatnicreation/${album_slug || 'general'}`;
           const crypto = await import('crypto');
           const signature = crypto.default
@@ -283,7 +283,7 @@ export default async function handler(req, res) {
               success: true,
               provider: 'cloudinary',
               url: cldData.secure_url,
-              thumbnail_url: cldData.secure_url.replace('/upload/', '/upload/w_600,c_scale,q_auto,f_auto/'),
+              thumbnail_url: cldData.secure_url.replace('/upload/', '/upload/w_500,c_scale,q_auto,f_auto/'),
               size_bytes: cldData.bytes || size_bytes
             };
           }
@@ -293,7 +293,7 @@ export default async function handler(req, res) {
         return null;
       }
 
-      // Helper for ImageKit Upload
+      // 2. Helper for ImageKit Upload (20GB Free)
       async function tryImageKit() {
         if (!config.imagekit.privateKey || !image_base64) return null;
         try {
@@ -314,7 +314,7 @@ export default async function handler(req, res) {
               success: true,
               provider: 'imagekit',
               url: ikData.url,
-              thumbnail_url: ikData.thumbnailUrl || ikData.url + '?tr=w-600',
+              thumbnail_url: ikData.thumbnailUrl || ikData.url + '?tr=w-500',
               size_bytes: ikData.size || size_bytes
             };
           }
@@ -324,31 +324,107 @@ export default async function handler(req, res) {
         return null;
       }
 
-      // Route according to selected strategy:
+      // 3. Helper for Supabase Storage Bucket Upload (1GB Free)
+      async function trySupabaseStorage() {
+        if (!hasSupabase || !image_base64) return null;
+        try {
+          const base64Clean = image_base64.includes(',') ? image_base64.split(',')[1] : image_base64;
+          const binaryBuffer = Buffer.from(base64Clean, 'base64');
+          const objectPath = `${album_slug || 'general'}/${cleanFilename}`;
+
+          const supaUploadResp = await fetch(`${config.supabaseUrl}/storage/v1/object/photos/${objectPath}`, {
+            method: 'POST',
+            headers: {
+              'apikey': config.supabaseKey,
+              'Authorization': `Bearer ${config.supabaseKey}`,
+              'Content-Type': 'image/webp',
+              'x-upsert': 'true'
+            },
+            body: binaryBuffer
+          });
+
+          if (supaUploadResp.ok) {
+            const publicUrl = `${config.supabaseUrl}/storage/v1/object/public/photos/${objectPath}`;
+            return {
+              success: true,
+              provider: 'supabase',
+              url: publicUrl,
+              thumbnail_url: publicUrl,
+              size_bytes: binaryBuffer.length || size_bytes
+            };
+          }
+        } catch (e) {
+          console.warn('Supabase storage upload error:', e);
+        }
+        return null;
+      }
+
+      // Route according to selected strategy with instant automatic failover:
       let uploadResult = null;
       if (storage_strategy === 'imagekit') {
-        uploadResult = await tryImageKit() || await tryCloudinary();
+        uploadResult = await tryImageKit() || await tryCloudinary() || await trySupabaseStorage();
       } else if (storage_strategy === 'cloudinary') {
-        uploadResult = await tryCloudinary() || await tryImageKit();
+        uploadResult = await tryCloudinary() || await tryImageKit() || await trySupabaseStorage();
+      } else if (storage_strategy === 'supabase') {
+        uploadResult = await trySupabaseStorage() || await tryCloudinary() || await tryImageKit();
       } else if (storage_strategy === 'cloudinary_imagekit') {
-        uploadResult = await tryCloudinary() || await tryImageKit();
+        // 50/50 load balance across Cloudinary & ImageKit
+        if (Math.random() < 0.5) {
+          uploadResult = await tryCloudinary() || await tryImageKit();
+        } else {
+          uploadResult = await tryImageKit() || await tryCloudinary();
+        }
       } else {
         // Auto default
-        uploadResult = await tryCloudinary() || await tryImageKit();
+        uploadResult = await tryCloudinary() || await tryImageKit() || await trySupabaseStorage();
       }
 
-      if (uploadResult) {
-        return res.status(200).json(uploadResult);
+      if (!uploadResult) {
+        uploadResult = {
+          success: true,
+          provider: 'local-storage',
+          url: image_base64 || `https://images.unsplash.com/photo-1583939003579-730e3918a45a?auto=format&fit=crop&w=1600&q=85`,
+          thumbnail_url: image_base64 || `https://images.unsplash.com/photo-1583939003579-730e3918a45a?auto=format&fit=crop&w=600&q=80`,
+          size_bytes: size_bytes || 400000
+        };
       }
 
-      // 3. Fallback: Base64 / Local Blob URL
-      return res.status(200).json({
-        success: true,
-        provider: 'local-storage',
-        url: image_base64 ? image_base64 : `https://images.unsplash.com/photo-1583939003579-730e3918a45a?auto=format&fit=crop&w=1600&q=85`,
-        thumbnail_url: image_base64 ? image_base64 : `https://images.unsplash.com/photo-1583939003579-730e3918a45a?auto=format&fit=crop&w=600&q=80`,
-        size_bytes: size_bytes || 500000
-      });
+      // Atomic DB Save if requested (eliminates 2nd HTTP roundtrip!)
+      if (save_to_db && album_slug) {
+        const newPhoto = {
+          id: 'photo_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
+          album_slug: album_slug,
+          url: uploadResult.url,
+          thumbnail_url: uploadResult.thumbnail_url || uploadResult.url,
+          original_name: filename || 'photo.webp',
+          provider: uploadResult.provider || 'cloudinary',
+          size_bytes: uploadResult.size_bytes || size_bytes || 0,
+          uploaded_at: new Date().toISOString()
+        };
+
+        if (hasSupabase) {
+          try {
+            const resp = await supabaseFetch('photos', {
+              method: 'POST',
+              body: JSON.stringify(newPhoto)
+            }, config);
+            const saved = await resp.json();
+            if (Array.isArray(saved) && saved.length > 0) {
+              uploadResult.photo = saved[0];
+            } else {
+              uploadResult.photo = newPhoto;
+            }
+          } catch (e) {
+            uploadResult.photo = newPhoto;
+          }
+        } else {
+          if (!localStore.photos[album_slug]) localStore.photos[album_slug] = [];
+          localStore.photos[album_slug].unshift(newPhoto);
+          uploadResult.photo = newPhoto;
+        }
+      }
+
+      return res.status(200).json(uploadResult);
     }
 
     // --------------------------------------------------------------------------

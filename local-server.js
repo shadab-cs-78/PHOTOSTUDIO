@@ -197,19 +197,39 @@ const server = http.createServer(async (req, res) => {
   if (pathname === '/api/upload') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
     const body = await readBody(req);
-    const { image_base64, size_bytes, storage_strategy = 'auto' } = body;
+    const { filename, album_slug, image_base64, size_bytes, storage_strategy = 'auto', save_to_db = false } = body;
     let provider = 'cloudinary';
     if (storage_strategy === 'imagekit') provider = 'imagekit';
     else if (storage_strategy === 'supabase') provider = 'supabase';
-    else if (storage_strategy === 'cloudinary_imagekit') provider = 'cloudinary';
+    else if (storage_strategy === 'cloudinary_imagekit') provider = Math.random() < 0.5 ? 'cloudinary' : 'imagekit';
 
-    return res.end(JSON.stringify({
+    const url = image_base64 || 'https://images.unsplash.com/photo-1583939003579-730e3918a45a?auto=format&fit=crop&w=1600&q=85';
+    const result = {
       success: true,
       provider: provider,
-      url: image_base64 || 'https://images.unsplash.com/photo-1583939003579-730e3918a45a?auto=format&fit=crop&w=1600&q=85',
-      thumbnail_url: image_base64 || 'https://images.unsplash.com/photo-1583939003579-730e3918a45a?auto=format&fit=crop&w=600&q=80',
-      size_bytes: size_bytes || 1200000
-    }));
+      url: url,
+      thumbnail_url: url,
+      size_bytes: size_bytes || 400000
+    };
+
+    if (save_to_db && album_slug) {
+      const newPhoto = {
+        id: 'photo_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
+        album_slug: album_slug,
+        url: result.url,
+        thumbnail_url: result.thumbnail_url,
+        original_name: filename || 'photo.webp',
+        provider: provider,
+        size_bytes: result.size_bytes,
+        uploaded_at: new Date().toISOString()
+      };
+      if (!db.photos[album_slug]) db.photos[album_slug] = [];
+      db.photos[album_slug].unshift(newPhoto);
+      saveDb();
+      result.photo = newPhoto;
+    }
+
+    return res.end(JSON.stringify(result));
   }
 
   // 4. /api/stats (Real dynamic storage computation)
