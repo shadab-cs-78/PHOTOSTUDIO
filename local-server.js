@@ -107,17 +107,30 @@ const server = http.createServer(async (req, res) => {
         if (alb) return res.end(JSON.stringify(alb));
         return res.end(JSON.stringify({ error: 'Album not found' }));
       }
-      return res.end(JSON.stringify({ albums: db.albums }));
+      const albumsWithCovers = db.albums.map(alb => {
+        const albPhotos = db.photos[alb.slug] || [];
+        return {
+          ...alb,
+          cover_url: albPhotos.length > 0 ? (albPhotos[0].thumbnail_url || albPhotos[0].url) : null
+        };
+      });
+      return res.end(JSON.stringify({ albums: albumsWithCovers }));
     }
 
     if (req.method === 'POST') {
       const body = await readBody(req);
-      const { title, client_email, location, category, guest_pin = '2026', expiry_days = 7, storage_strategy = 'auto' } = body;
-      const cleanSlug = (title || 'wedding')
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/(^-|-$)/g, '')
-        .slice(0, 20) + '-' + Math.random().toString(36).substring(2, 6);
+      const { title, client_email, location, category, guest_pin = '2026', expiry_days = 7, storage_strategy = 'auto', slug: requestedSlug } = body;
+      const baseSlug = requestedSlug
+        ? requestedSlug.toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/(^-|-$)/g, '')
+        : (title || 'wedding')
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/(^-|-$)/g, '')
+            .slice(0, 20) + '-' + Math.random().toString(36).substring(2, 6);
+
+      const cleanSlug = db.albums.some(a => a.slug === baseSlug)
+        ? baseSlug + '-' + Math.random().toString(36).substring(2, 5)
+        : baseSlug;
 
       const days = parseInt(expiry_days);
       const expiresAt = (days && days > 0) ? new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString() : null;

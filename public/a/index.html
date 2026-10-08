@@ -187,13 +187,13 @@
     let currentAlbum = null;
     let albumPhotos = [];
 
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', async () => {
       // Determine slug from URL
       const pathParts = window.location.pathname.split('/').filter(Boolean);
       const urlParams = new URLSearchParams(window.location.search);
       currentSlug = urlParams.get('slug') || (pathParts.length > 1 ? pathParts[1] : 'alia-ranbir');
 
-      loadRealAlbumData();
+      await loadRealAlbumData();
 
       // Setup Real-Time Live Sync (No Page Refresh Needed)
       if (typeof BroadcastChannel !== 'undefined') {
@@ -211,10 +211,18 @@
         }
       });
 
-      // Background live poll every 2.5 seconds
+      // Smart Visibility-Aware Background Poll (12s interval, pauses when tab is hidden)
       setInterval(() => {
-        syncPhotosSilently(false);
-      }, 2500);
+        if (!document.hidden) {
+          syncPhotosSilently(false);
+        }
+      }, 12000);
+
+      document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) {
+          syncPhotosSilently(false);
+        }
+      });
 
       // Check saved unlock state or URL PIN parameter
       const urlPin = urlParams.get('pin');
@@ -370,9 +378,9 @@
       }
 
       const pin = document.getElementById('wedding-pin-input').value.trim();
-      const expectedPin = currentAlbum ? (currentAlbum.guest_pin || '2026') : '2026';
+      const expectedPin = (currentAlbum && currentAlbum.guest_pin) ? String(currentAlbum.guest_pin).trim() : '2026';
 
-      if (pin === expectedPin || pin === '2026' || pin.length === 4) {
+      if (pin === expectedPin) {
         localStorage.removeItem(attemptsKey);
         localStorage.removeItem(lockoutKey);
         localStorage.setItem(`unlocked_${currentSlug}`, 'true');
