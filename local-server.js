@@ -107,30 +107,17 @@ const server = http.createServer(async (req, res) => {
         if (alb) return res.end(JSON.stringify(alb));
         return res.end(JSON.stringify({ error: 'Album not found' }));
       }
-      const albumsWithCovers = db.albums.map(alb => {
-        const albPhotos = db.photos[alb.slug] || [];
-        return {
-          ...alb,
-          cover_url: albPhotos.length > 0 ? (albPhotos[0].thumbnail_url || albPhotos[0].url) : null
-        };
-      });
-      return res.end(JSON.stringify({ albums: albumsWithCovers }));
+      return res.end(JSON.stringify({ albums: db.albums }));
     }
 
     if (req.method === 'POST') {
       const body = await readBody(req);
-      const { title, client_email, location, category, guest_pin = '2026', expiry_days = 7, storage_strategy = 'auto', slug: requestedSlug } = body;
-      const baseSlug = requestedSlug
-        ? requestedSlug.toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/(^-|-$)/g, '')
-        : (title || 'wedding')
-            .toLowerCase()
-            .replace(/[^a-z0-9]+/g, '-')
-            .replace(/(^-|-$)/g, '')
-            .slice(0, 20) + '-' + Math.random().toString(36).substring(2, 6);
-
-      const cleanSlug = db.albums.some(a => a.slug === baseSlug)
-        ? baseSlug + '-' + Math.random().toString(36).substring(2, 5)
-        : baseSlug;
+      const { title, client_email, location, category, guest_pin = '2026', expiry_days = 7, storage_strategy = 'auto' } = body;
+      const cleanSlug = (title || 'wedding')
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)/g, '')
+        .slice(0, 20) + '-' + Math.random().toString(36).substring(2, 6);
 
       const days = parseInt(expiry_days);
       const expiresAt = (days && days > 0) ? new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString() : null;
@@ -179,13 +166,12 @@ const server = http.createServer(async (req, res) => {
     if (req.method === 'POST') {
       const body = await readBody(req);
       const { album_slug, url, thumbnail_url, original_name, provider = 'cloudinary', size_bytes = 0 } = body;
-      const isBase64 = url && url.startsWith('data:');
 
       const newPhoto = {
         id: 'photo_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
         album_slug: album_slug,
         url: url,
-        thumbnail_url: isBase64 ? '' : (thumbnail_url || url),
+        thumbnail_url: thumbnail_url || url,
         original_name: original_name || 'photo.webp',
         provider: provider,
         size_bytes: size_bytes,
@@ -211,40 +197,19 @@ const server = http.createServer(async (req, res) => {
   if (pathname === '/api/upload') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
     const body = await readBody(req);
-    const { filename, album_slug, image_base64, size_bytes, storage_strategy = 'auto', save_to_db = false } = body;
+    const { image_base64, size_bytes, storage_strategy = 'auto' } = body;
     let provider = 'cloudinary';
     if (storage_strategy === 'imagekit') provider = 'imagekit';
     else if (storage_strategy === 'supabase') provider = 'supabase';
-    else if (storage_strategy === 'cloudinary_imagekit') provider = Math.random() < 0.5 ? 'cloudinary' : 'imagekit';
+    else if (storage_strategy === 'cloudinary_imagekit') provider = 'cloudinary';
 
-    const url = image_base64 || 'https://images.unsplash.com/photo-1583939003579-730e3918a45a?auto=format&fit=crop&w=1600&q=85';
-    const isBase64 = url && url.startsWith('data:');
-    const result = {
+    return res.end(JSON.stringify({
       success: true,
       provider: provider,
-      url: url,
-      thumbnail_url: isBase64 ? '' : url,
-      size_bytes: size_bytes || 400000
-    };
-
-    if (save_to_db && album_slug) {
-      const newPhoto = {
-        id: 'photo_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
-        album_slug: album_slug,
-        url: result.url,
-        thumbnail_url: result.thumbnail_url,
-        original_name: filename || 'photo.webp',
-        provider: provider,
-        size_bytes: result.size_bytes,
-        uploaded_at: new Date().toISOString()
-      };
-      if (!db.photos[album_slug]) db.photos[album_slug] = [];
-      db.photos[album_slug].unshift(newPhoto);
-      saveDb();
-      result.photo = newPhoto;
-    }
-
-    return res.end(JSON.stringify(result));
+      url: image_base64 || 'https://images.unsplash.com/photo-1583939003579-730e3918a45a?auto=format&fit=crop&w=1600&q=85',
+      thumbnail_url: image_base64 || 'https://images.unsplash.com/photo-1583939003579-730e3918a45a?auto=format&fit=crop&w=600&q=80',
+      size_bytes: size_bytes || 1200000
+    }));
   }
 
   // 4. /api/stats (Real dynamic storage computation)

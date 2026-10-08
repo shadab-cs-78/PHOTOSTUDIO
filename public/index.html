@@ -240,18 +240,14 @@
         return;
       }
 
-      grid.innerHTML = albums.map(album => {
-        const localPhotos = JSON.parse(localStorage.getItem(`photos_${album.slug}`) || '[]');
-        const coverImg = album.cover_url || (localPhotos.length > 0 ? (localPhotos[0].thumbnail_url || localPhotos[0].url) : 'https://images.unsplash.com/photo-1583939003579-730e3918a45a?auto=format&fit=crop&w=800&q=80');
-
-        return `
+      grid.innerHTML = albums.map(album => `
         <article class="album-card">
           <div class="card-image-wrap" style="aspect-ratio: 16/10;">
-            <img class="card-img" src="${coverImg}" alt="${album.title}" onerror="this.src='https://images.unsplash.com/photo-1583939003579-730e3918a45a?auto=format&fit=crop&w=800&q=80'">
+            <img class="card-img" src="https://images.unsplash.com/photo-1583939003579-730e3918a45a?auto=format&fit=crop&w=800&q=80" alt="${album.title}">
             <span class="badge-status-top badge-active">Active Delivery</span>
             <span class="badge-storage-bottom">
               <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><rect width="18" height="18" x="3" y="3" rx="2"/></svg>
-              🔒 4-Digit PIN
+              PIN: ${album.guest_pin || '2026'}
             </span>
           </div>
           <div class="card-body">
@@ -260,7 +256,7 @@
               <span>4K Delivery</span>
             </div>
             <h3 class="card-title">${album.title}</h3>
-            <p class="card-desc">Scan wedding card QR or enter your 4-digit secret PIN to unlock gallery.</p>
+            <p class="card-desc">Scan QR or enter PIN ${album.guest_pin || '2026'} to view client delivery gallery.</p>
             <div class="card-action-footer">
               <a href="/a/${album.slug}" class="view-gallery-link">
                 Unlock Gallery
@@ -274,7 +270,7 @@
             </div>
           </div>
         </article>
-      `}).join('');
+      `).join('');
     }
 
     document.addEventListener('DOMContentLoaded', () => {

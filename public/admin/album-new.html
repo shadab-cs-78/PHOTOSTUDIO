@@ -174,7 +174,6 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             title: title,
-            slug: currentPreviewSlug,
             client_email: clientEmail,
             location: location,
             category: category,
@@ -203,8 +202,8 @@
       } catch (err) {
         console.error('Create album failed:', err);
         // Offline fallback
-        const slug = currentPreviewSlug;
-        const days = parseInt(expiryDays) || 7;
+        const slug = currentPreviewSlug + '-' + Math.random().toString(36).substring(2, 6);
+        const days = parseInt(expiryDays) || 30;
         const expiresAt = days > 0 ? new Date(Date.now() + days * 86400000).toISOString() : null;
         const fallbackAlbum = { slug, title, client_email: clientEmail, location, category, guest_pin: guestPin, storage_strategy: storageStrategy, status: 'ready', expires_at: expiresAt };
         const localAlbums = JSON.parse(localStorage.getItem('photovault_local_albums') || '[]');

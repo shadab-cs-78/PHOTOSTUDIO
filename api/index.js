@@ -1,11 +1,9 @@
 /**
  * PHOTOVAULT - Consolidated Single Serverless API Handler
  * 100% Real Database (Supabase REST API) + Multi-Cloud Storage (Cloudinary, ImageKit, Supabase Storage)
- * Includes Real Cloud File Deletion & Auto-Recycling for Zero-Cost Lifetime Operation
  * Handles: /api/albums, /api/photos, /api/upload, /api/auth, /api/stats, /api/cron/cleanup
  */
 
-import crypto from 'crypto';
 import { getAppConfig } from './config.js';
 
 // In-memory fallback store for local dev when keys aren't set
@@ -21,7 +19,7 @@ const localStore = {
       guest_pin: '2026',
       status: 'ready',
       created_at: new Date().toISOString(),
-      expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+      expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
     }
   ],
   photos: {
@@ -34,170 +32,17 @@ const localStore = {
   logs: []
 };
 
-// Helper: Resolve valid Supabase API key (prevents placeholder/empty serviceKey from shadowing anonKey)
-function getValidSupabaseKey(config) {
-  const sKey = (config.supabase?.serviceKey || '').trim();
-  const aKey = (config.supabase?.anonKey || '').trim();
-  if (sKey && sKey !== 'mock-service' && !sKey.includes('your-') && (sKey.startsWith('eyJ') || sKey.startsWith('sb_'))) {
-    return sKey;
-  }
-  if (aKey && aKey !== 'mock-anon' && !aKey.includes('your-')) {
-    return aKey;
-  }
-  return sKey || aKey;
-}
-
 // Helper: Supabase REST API Request
 async function supabaseFetch(endpoint, options = {}, config) {
   const url = `${config.supabase.url}/rest/v1/${endpoint}`;
-  const key = getValidSupabaseKey(config);
   const headers = {
-    'apikey': key,
-    'Authorization': `Bearer ${key}`,
+    'apikey': config.supabase.serviceKey || config.supabase.anonKey,
+    'Authorization': `Bearer ${config.supabase.serviceKey || config.supabase.anonKey}`,
     'Content-Type': 'application/json',
     'Prefer': 'return=representation',
     ...options.headers
   };
   return fetch(url, { ...options, headers });
-}
-
-// Helper: Save photo to Supabase (auto-heals missing parent album foreign key & avoids duplicate base64)
-async function savePhotoToDatabase(photoInput, config, hasSupabase) {
-  const isBase64 = photoInput.url && photoInput.url.startsWith('data:');
-  const newPhoto = {
-    id: photoInput.id || ('photo_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6)),
-    album_slug: photoInput.album_slug,
-    url: photoInput.url,
-    thumbnail_url: isBase64 ? '' : (photoInput.thumbnail_url || photoInput.url),
-    original_name: photoInput.original_name || 'photo.webp',
-    provider: photoInput.provider || 'cloudinary',
-    size_bytes: photoInput.size_bytes || 0,
-    uploaded_at: photoInput.uploaded_at || new Date().toISOString()
-  };
-
-  // Always keep in-memory store synced
-  if (!localStore.photos[newPhoto.album_slug]) localStore.photos[newPhoto.album_slug] = [];
-  if (!localStore.photos[newPhoto.album_slug].some(p => p.id === newPhoto.id)) {
-    localStore.photos[newPhoto.album_slug].unshift(newPhoto);
-  }
-
-  if (hasSupabase) {
-    try {
-      let resp = await supabaseFetch('photos', {
-        method: 'POST',
-        body: JSON.stringify(newPhoto)
-      }, config);
-      let saved = await resp.json();
-
-      if (Array.isArray(saved) && saved.length > 0) {
-        return saved[0];
-      }
-
-      // If foreign key error (23503: album_slug not present in albums table), auto-create parent album & retry!
-      if (saved && (saved.code === '23503' || (saved.message && saved.message.includes('foreign key')) || (saved.details && saved.details.includes('albums')))) {
-        const autoAlbum = {
-          id: 'alb_' + Date.now(),
-          slug: newPhoto.album_slug,
-          title: newPhoto.album_slug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
-          client_email: 'client@gmail.com',
-          location: 'Katni • M.P.',
-          category: 'wedding',
-          guest_pin: '2026',
-          status: 'ready',
-          created_at: new Date().toISOString(),
-          expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
-        };
-        await supabaseFetch('albums', {
-          method: 'POST',
-          headers: { 'Prefer': 'resolution=ignore-duplicates,return=representation' },
-          body: JSON.stringify(autoAlbum)
-        }, config);
-
-        // Retry photo insert now that parent album exists
-        resp = await supabaseFetch('photos', {
-          method: 'POST',
-          body: JSON.stringify(newPhoto)
-        }, config);
-        saved = await resp.json();
-        if (Array.isArray(saved) && saved.length > 0) {
-          return saved[0];
-        }
-      }
-    } catch (e) {
-      console.error('Supabase photo insert error:', e);
-    }
-  }
-
-  return newPhoto;
-}
-
-// Helper: Purge actual image file from Cloudinary / ImageKit / Supabase Storage
-async function purgePhotoFromCloudStorage(photo, config) {
-  if (!photo || !photo.url) return;
-  try {
-    // 1. Cloudinary Destroy API
-    if (photo.provider === 'cloudinary' || photo.url.includes('res.cloudinary.com')) {
-      if (config.cloudinary.cloudName && config.cloudinary.apiKey && config.cloudinary.apiSecret) {
-        const match = photo.url.match(/\/upload\/(?:v\d+\/)?(.+)\.[a-zA-Z0-9]+$/);
-        if (match && match[1]) {
-          const publicId = match[1];
-          const timestamp = Math.round(Date.now() / 1000);
-          const signature = crypto
-            .createHash('sha1')
-            .update(`public_id=${publicId}&timestamp=${timestamp}${config.cloudinary.apiSecret}`)
-            .digest('hex');
-
-          const formData = new URLSearchParams();
-          formData.append('public_id', publicId);
-          formData.append('api_key', config.cloudinary.apiKey);
-          formData.append('timestamp', timestamp.toString());
-          formData.append('signature', signature);
-
-          await fetch(`https://api.cloudinary.com/v1_1/${config.cloudinary.cloudName}/image/destroy`, {
-            method: 'POST',
-            body: formData
-          });
-        }
-      }
-    }
-    // 2. ImageKit Delete API
-    else if (photo.provider === 'imagekit' || photo.url.includes('ik.imagekit.io')) {
-      if (config.imagekit.privateKey) {
-        const authHeader = 'Basic ' + Buffer.from(config.imagekit.privateKey + ':').toString('base64');
-        const urlParts = photo.url.split('?')[0].split('/');
-        const fileName = urlParts[urlParts.length - 1];
-        if (fileName) {
-          const searchResp = await fetch(`https://api.imagekit.io/v1/files?name=${encodeURIComponent(fileName)}&limit=1`, {
-            headers: { 'Authorization': authHeader }
-          });
-          const files = await searchResp.json();
-          if (Array.isArray(files) && files.length > 0 && files[0].fileId) {
-            await fetch(`https://api.imagekit.io/v1/files/${files[0].fileId}`, {
-              method: 'DELETE',
-              headers: { 'Authorization': authHeader }
-            });
-          }
-        }
-      }
-    }
-    // 3. Supabase Storage Bucket Delete
-    else if (photo.provider === 'supabase' || photo.url.includes('/storage/v1/object/public/photos/')) {
-      const splitMarker = '/storage/v1/object/public/photos/';
-      if (photo.url.includes(splitMarker) && config.supabase.url) {
-        const objectPath = photo.url.split(splitMarker)[1];
-        const key = getValidSupabaseKey(config);
-        await fetch(`${config.supabase.url}/storage/v1/object/photos/${objectPath}`, {
-          method: 'DELETE',
-          headers: {
-            'apikey': key,
-            'Authorization': `Bearer ${key}`
-          }
-        });
-      }
-    }
-  } catch (err) {
-    console.warn('Cloud file purge warning:', err.message);
-  }
 }
 
 export default async function handler(req, res) {
@@ -227,29 +72,11 @@ export default async function handler(req, res) {
             if (slug) {
               const resp = await supabaseFetch(`albums?slug=eq.${slug}&select=*`, {}, config);
               const data = await resp.json();
-              if (Array.isArray(data) && data.length > 0) return res.status(200).json(data[0]);
+              if (data && data.length > 0) return res.status(200).json(data[0]);
             } else {
               const resp = await supabaseFetch(`albums?select=*&order=created_at.desc`, {}, config);
-              const albumsData = await resp.json();
-              if (Array.isArray(albumsData)) {
-                // Attach real cover_url from photos table for each album
-                try {
-                  const pResp = await supabaseFetch(`photos?select=album_slug,thumbnail_url,url&order=uploaded_at.desc`, {}, config);
-                  const photosData = await pResp.json();
-                  if (Array.isArray(photosData)) {
-                    const coverMap = {};
-                    for (const p of photosData) {
-                      if (p.album_slug && !coverMap[p.album_slug]) {
-                        coverMap[p.album_slug] = p.thumbnail_url || p.url;
-                      }
-                    }
-                    albumsData.forEach(a => {
-                      if (coverMap[a.slug]) a.cover_url = coverMap[a.slug];
-                    });
-                  }
-                } catch (covErr) {}
-                return res.status(200).json({ albums: albumsData });
-              }
+              const data = await resp.json();
+              return res.status(200).json({ albums: data || [] });
             }
           } catch (e) {
             console.error('Supabase fetch error, fallback to local store:', e);
@@ -262,47 +89,26 @@ export default async function handler(req, res) {
           if (alb) return res.status(200).json(alb);
           return res.status(404).json({ error: 'Album not found' });
         }
-        const enrichedLocalAlbums = localStore.albums.map(a => {
-          const albPhotos = localStore.photos[a.slug] || [];
-          return {
-            ...a,
-            cover_url: albPhotos.length > 0 ? (albPhotos[0].thumbnail_url || albPhotos[0].url) : null
-          };
-        });
-        return res.status(200).json({ albums: enrichedLocalAlbums });
+        return res.status(200).json({ albums: localStore.albums });
       }
 
       // POST /api/albums (Create New Album)
       if (req.method === 'POST') {
         const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body || {};
-        const { title, slug: requestedSlug, client_email, location, category, guest_pin = '2026', expiry_days = 7, storage_strategy = 'auto' } = body;
+        const { title, client_email, location, category, guest_pin = '2026', expiry_days = 7, storage_strategy = 'auto' } = body;
         
-        let baseSlug = (requestedSlug || title || 'wedding')
+        const slug = (title || 'wedding')
           .toLowerCase()
           .replace(/[^a-z0-9]+/g, '-')
           .replace(/(^-|-$)/g, '')
-          .slice(0, 32) || 'wedding';
+          .slice(0, 20) + '-' + Math.random().toString(36).substring(2, 6);
 
-        // Check if baseSlug already exists; only append suffix if duplicate
-        let finalSlug = baseSlug;
-        if (hasSupabase) {
-          try {
-            const existingResp = await supabaseFetch(`albums?slug=eq.${baseSlug}&select=slug`, {}, config);
-            const existingData = await existingResp.json();
-            if (Array.isArray(existingData) && existingData.length > 0) {
-              finalSlug = `${baseSlug}-${Math.random().toString(36).substring(2, 6)}`;
-            }
-          } catch (e) {}
-        } else if (localStore.albums.some(a => a.slug === baseSlug)) {
-          finalSlug = `${baseSlug}-${Math.random().toString(36).substring(2, 6)}`;
-        }
-
-        const days = parseInt(expiry_days) || 7;
-        const expiresAt = days > 0 ? new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString() : null;
+        const days = parseInt(expiry_days);
+        const expiresAt = (days && days > 0) ? new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString() : null;
 
         const newAlbum = {
           id: 'alb_' + Date.now(),
-          slug: finalSlug,
+          slug: slug,
           title: title || 'New Wedding Monograph',
           client_email: client_email || 'client@gmail.com',
           location: location || 'Katni • M.P.',
@@ -316,24 +122,13 @@ export default async function handler(req, res) {
 
         if (hasSupabase) {
           try {
-            let resp = await supabaseFetch('albums', {
+            const resp = await supabaseFetch('albums', {
               method: 'POST',
               body: JSON.stringify(newAlbum)
             }, config);
-            let savedData = await resp.json();
-
-            // Schema Resilience: If Supabase table doesn't have 'storage_strategy' column yet, retry without it
-            if (!Array.isArray(savedData) && savedData && savedData.message && savedData.message.includes('storage_strategy')) {
-              const { storage_strategy: _omit, ...compatAlbum } = newAlbum;
-              resp = await supabaseFetch('albums', {
-                method: 'POST',
-                body: JSON.stringify(compatAlbum)
-              }, config);
-              savedData = await resp.json();
-            }
-
-            if (Array.isArray(savedData) && savedData.length > 0) {
-              return res.status(201).json({ success: true, album: { ...savedData[0], storage_strategy } });
+            const savedData = await resp.json();
+            if (savedData && savedData.length > 0) {
+              return res.status(201).json({ success: true, album: savedData[0] });
             }
           } catch (e) {
             console.error('Supabase album insert error:', e);
@@ -350,14 +145,8 @@ export default async function handler(req, res) {
 
         if (hasSupabase) {
           try {
-            // Fetch all photos in album to purge from Cloudinary/ImageKit/Supabase Storage first
-            const pResp = await supabaseFetch(`photos?album_slug=eq.${slug}&select=*`, {}, config);
-            const pList = await pResp.json();
-            if (Array.isArray(pList) && pList.length > 0) {
-              await Promise.allSettled(pList.map(photo => purgePhotoFromCloudStorage(photo, config)));
-            }
-            await supabaseFetch(`photos?album_slug=eq.${slug}`, { method: 'DELETE' }, config);
             await supabaseFetch(`albums?slug=eq.${slug}`, { method: 'DELETE' }, config);
+            await supabaseFetch(`photos?album_slug=eq.${slug}`, { method: 'DELETE' }, config);
           } catch (e) {
             console.error('Supabase album delete error:', e);
           }
@@ -365,7 +154,7 @@ export default async function handler(req, res) {
 
         localStore.albums = localStore.albums.filter(a => a.slug !== slug);
         delete localStore.photos[slug];
-        return res.status(200).json({ success: true, message: 'Album and cloud photos permanently deleted' });
+        return res.status(200).json({ success: true, message: 'Album and photos deleted' });
       }
     }
 
@@ -385,9 +174,7 @@ export default async function handler(req, res) {
           try {
             const resp = await supabaseFetch(`photos?album_slug=eq.${slug}&select=*&order=uploaded_at.desc`, {}, config);
             const data = await resp.json();
-            if (Array.isArray(data) && data.length > 0) {
-              return res.status(200).json({ photos: data });
-            }
+            if (Array.isArray(data)) return res.status(200).json({ photos: data });
           } catch (e) {
             console.error('Supabase photos fetch error:', e);
           }
@@ -406,16 +193,35 @@ export default async function handler(req, res) {
           return res.status(400).json({ error: 'album_slug and url are required' });
         }
 
-        const savedPhoto = await savePhotoToDatabase({
-          album_slug,
-          url,
-          thumbnail_url,
-          original_name,
-          provider,
-          size_bytes
-        }, config, hasSupabase);
+        const newPhoto = {
+          id: 'photo_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
+          album_slug: album_slug,
+          url: url,
+          thumbnail_url: thumbnail_url || url,
+          original_name: original_name || 'photo.webp',
+          provider: provider,
+          size_bytes: size_bytes,
+          uploaded_at: new Date().toISOString()
+        };
 
-        return res.status(201).json({ success: true, photo: savedPhoto });
+        if (hasSupabase) {
+          try {
+            const resp = await supabaseFetch('photos', {
+              method: 'POST',
+              body: JSON.stringify(newPhoto)
+            }, config);
+            const saved = await resp.json();
+            if (saved && saved.length > 0) {
+              return res.status(201).json({ success: true, photo: saved[0] });
+            }
+          } catch (e) {
+            console.error('Supabase photo insert error:', e);
+          }
+        }
+
+        if (!localStore.photos[album_slug]) localStore.photos[album_slug] = [];
+        localStore.photos[album_slug].unshift(newPhoto);
+        return res.status(201).json({ success: true, photo: newPhoto });
       }
 
       // DELETE /api/photos?id=xxx&slug=xxx
@@ -424,11 +230,6 @@ export default async function handler(req, res) {
 
         if (hasSupabase) {
           try {
-            const pResp = await supabaseFetch(`photos?id=eq.${photoId}&select=*`, {}, config);
-            const pData = await pResp.json();
-            if (Array.isArray(pData) && pData.length > 0) {
-              await purgePhotoFromCloudStorage(pData[0], config);
-            }
             await supabaseFetch(`photos?id=eq.${photoId}`, { method: 'DELETE' }, config);
           } catch (e) {
             console.error('Supabase photo delete error:', e);
@@ -438,7 +239,7 @@ export default async function handler(req, res) {
         if (slug && localStore.photos[slug]) {
           localStore.photos[slug] = localStore.photos[slug].filter(p => p.id !== photoId);
         }
-        return res.status(200).json({ success: true, message: 'Photo deleted from database and cloud storage' });
+        return res.status(200).json({ success: true, message: 'Photo deleted' });
       }
     }
 
@@ -449,17 +250,18 @@ export default async function handler(req, res) {
       if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
       const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body || {};
-      const { filename, album_slug, image_base64, size_bytes, storage_strategy = 'auto', save_to_db = false } = body;
+      const { filename, album_slug, image_base64, size_bytes, storage_strategy = 'auto' } = body;
 
-      const cleanFilename = `${Date.now()}_${(filename || 'photo.webp').replace(/[^a-zA-Z0-9._-]/g, '_')}`;
+      const cleanFilename = (filename || `photo_${Date.now()}.webp`).replace(/[^a-zA-Z0-9._-]/g, '_');
 
-      // 1. Helper for Cloudinary Upload (25GB Free)
+      // Helper for Cloudinary Upload
       async function tryCloudinary() {
         if (!config.cloudinary.cloudName || !config.cloudinary.apiKey || !config.cloudinary.apiSecret || !image_base64) return null;
         try {
-          const timestamp = Math.round(Date.now() / 1000);
+          const timestamp = Math.round(new Date().getTime() / 1000);
           const folder = `thekatnicreation/${album_slug || 'general'}`;
-          const signature = crypto
+          const crypto = await import('crypto');
+          const signature = crypto.default
             .createHash('sha1')
             .update(`folder=${folder}&timestamp=${timestamp}${config.cloudinary.apiSecret}`)
             .digest('hex');
@@ -481,7 +283,7 @@ export default async function handler(req, res) {
               success: true,
               provider: 'cloudinary',
               url: cldData.secure_url,
-              thumbnail_url: cldData.secure_url.replace('/upload/', '/upload/w_500,c_scale,q_auto,f_auto/'),
+              thumbnail_url: cldData.secure_url.replace('/upload/', '/upload/w_600,c_scale,q_auto,f_auto/'),
               size_bytes: cldData.bytes || size_bytes
             };
           }
@@ -491,7 +293,7 @@ export default async function handler(req, res) {
         return null;
       }
 
-      // 2. Helper for ImageKit Upload (20GB Free)
+      // Helper for ImageKit Upload
       async function tryImageKit() {
         if (!config.imagekit.privateKey || !image_base64) return null;
         try {
@@ -512,7 +314,7 @@ export default async function handler(req, res) {
               success: true,
               provider: 'imagekit',
               url: ikData.url,
-              thumbnail_url: ikData.thumbnailUrl || ikData.url + '?tr=w-500',
+              thumbnail_url: ikData.thumbnailUrl || ikData.url + '?tr=w-600',
               size_bytes: ikData.size || size_bytes
             };
           }
@@ -522,112 +324,35 @@ export default async function handler(req, res) {
         return null;
       }
 
-      // 3. Helper for Supabase Storage Bucket Upload (1GB Free + Auto-Bucket Creation)
-      async function trySupabaseStorage() {
-        if (!hasSupabase || !image_base64) return null;
-        try {
-          const base64Clean = image_base64.includes(',') ? image_base64.split(',')[1] : image_base64;
-          const binaryBuffer = Buffer.from(base64Clean, 'base64');
-          const bucketName = 'photos';
-          const objectPath = `${album_slug || 'general'}/${cleanFilename}`;
-          const key = getValidSupabaseKey(config);
-
-          let supaUploadResp = await fetch(`${config.supabase.url}/storage/v1/object/${bucketName}/${objectPath}`, {
-            method: 'POST',
-            headers: {
-              'apikey': key,
-              'Authorization': `Bearer ${key}`,
-              'Content-Type': 'image/webp',
-              'x-upsert': 'true'
-            },
-            body: binaryBuffer
-          });
-
-          // If bucket doesn't exist yet, auto-create public 'photos' bucket and retry upload!
-          if (!supaUploadResp.ok) {
-            await fetch(`${config.supabase.url}/storage/v1/bucket`, {
-              method: 'POST',
-              headers: {
-                'apikey': key,
-                'Authorization': `Bearer ${key}`,
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({ id: bucketName, name: bucketName, public: true })
-            }).catch(() => {});
-
-            supaUploadResp = await fetch(`${config.supabase.url}/storage/v1/object/${bucketName}/${objectPath}`, {
-              method: 'POST',
-              headers: {
-                'apikey': key,
-                'Authorization': `Bearer ${key}`,
-                'Content-Type': 'image/webp',
-                'x-upsert': 'true'
-              },
-              body: binaryBuffer
-            });
-          }
-
-          if (supaUploadResp.ok) {
-            const publicUrl = `${config.supabase.url}/storage/v1/object/public/${bucketName}/${objectPath}`;
-            return {
-              success: true,
-              provider: 'supabase',
-              url: publicUrl,
-              thumbnail_url: publicUrl,
-              size_bytes: binaryBuffer.length || size_bytes
-            };
-          }
-        } catch (e) {
-          console.warn('Supabase storage upload error:', e);
-        }
-        return null;
-      }
-
-      // Route according to selected strategy with instant automatic failover:
+      // Route according to selected strategy:
       let uploadResult = null;
       if (storage_strategy === 'imagekit') {
-        uploadResult = await tryImageKit() || await tryCloudinary() || await trySupabaseStorage();
+        uploadResult = await tryImageKit() || await tryCloudinary();
       } else if (storage_strategy === 'cloudinary') {
-        uploadResult = await tryCloudinary() || await tryImageKit() || await trySupabaseStorage();
-      } else if (storage_strategy === 'supabase') {
-        uploadResult = await trySupabaseStorage() || await tryCloudinary() || await tryImageKit();
+        uploadResult = await tryCloudinary() || await tryImageKit();
       } else if (storage_strategy === 'cloudinary_imagekit') {
-        if (Math.random() < 0.5) {
-          uploadResult = await tryCloudinary() || await tryImageKit() || await trySupabaseStorage();
-        } else {
-          uploadResult = await tryImageKit() || await tryCloudinary() || await trySupabaseStorage();
-        }
+        uploadResult = await tryCloudinary() || await tryImageKit();
       } else {
-        uploadResult = await tryCloudinary() || await tryImageKit() || await trySupabaseStorage();
+        // Auto default
+        uploadResult = await tryCloudinary() || await tryImageKit();
       }
 
-      if (!uploadResult) {
-        uploadResult = {
-          success: true,
-          provider: 'local-storage',
-          url: image_base64 || `https://images.unsplash.com/photo-1583939003579-730e3918a45a?auto=format&fit=crop&w=1600&q=85`,
-          thumbnail_url: '',
-          size_bytes: size_bytes || 400000
-        };
+      if (uploadResult) {
+        return res.status(200).json(uploadResult);
       }
 
-      // Atomic DB Save if requested
-      if (save_to_db && album_slug) {
-        uploadResult.photo = await savePhotoToDatabase({
-          album_slug: album_slug,
-          url: uploadResult.url,
-          thumbnail_url: uploadResult.thumbnail_url,
-          original_name: filename || 'photo.webp',
-          provider: uploadResult.provider || 'cloudinary',
-          size_bytes: uploadResult.size_bytes || size_bytes || 0
-        }, config, hasSupabase);
-      }
-
-      return res.status(200).json(uploadResult);
+      // 3. Fallback: Base64 / Local Blob URL
+      return res.status(200).json({
+        success: true,
+        provider: 'local-storage',
+        url: image_base64 ? image_base64 : `https://images.unsplash.com/photo-1583939003579-730e3918a45a?auto=format&fit=crop&w=1600&q=85`,
+        thumbnail_url: image_base64 ? image_base64 : `https://images.unsplash.com/photo-1583939003579-730e3918a45a?auto=format&fit=crop&w=600&q=80`,
+        size_bytes: size_bytes || 500000
+      });
     }
 
     // --------------------------------------------------------------------------
-    // 4. /api/stats (Live Storage Quota Metrics)
+    // 4. /api/stats (Live Access Audit Trail)
     // --------------------------------------------------------------------------
     if (pathname === '/stats' || pathname.startsWith('/stats/')) {
       if (req.method === 'POST') {
@@ -658,12 +383,18 @@ export default async function handler(req, res) {
 
       if (hasSupabase) {
         try {
+          const resp = await supabaseFetch('access_logs?select=*&order=created_at.desc&limit=50', {}, config);
+          const data = await resp.json();
+          if (Array.isArray(data) && data.length > 0) dbLogs = data;
+        } catch (e) {}
+
+        try {
           const pResp = await supabaseFetch('photos?select=provider,size_bytes', {}, config);
           const pData = await pResp.json();
           if (Array.isArray(pData)) {
             pData.forEach(p => {
               totalPhotos++;
-              const bytes = Number(p.size_bytes) || 600000;
+              const bytes = Number(p.size_bytes) || 1200000;
               if (p.provider === 'imagekit') ikBytes += bytes;
               else if (p.provider === 'supabase' || p.provider === 'supabase-storage') supaBytes += bytes;
               else cldBytes += bytes;
@@ -677,7 +408,7 @@ export default async function handler(req, res) {
           if (Array.isArray(photoList)) {
             photoList.forEach(p => {
               totalPhotos++;
-              const bytes = Number(p.size_bytes) || 600000;
+              const bytes = Number(p.size_bytes) || 1200000;
               if (p.provider === 'imagekit') ikBytes += bytes;
               else if (p.provider === 'supabase' || p.provider === 'supabase-storage') supaBytes += bytes;
               else cldBytes += bytes;
@@ -695,9 +426,9 @@ export default async function handler(req, res) {
         total_albums: localStore.albums.length,
         total_photos: totalPhotos,
         storage: {
-          total_free_gb: 46.0,
-          total_used_gb: Number(totalGB.toFixed(3)),
-          total_used_mb: Number(((cldBytes + ikBytes + supaBytes) / (1024 * 1024)).toFixed(2)),
+          total_quota_gb: 46.0,
+          used_gb: Number(totalGB.toFixed(3)),
+          free_gb: Number((46.0 - totalGB).toFixed(3)),
           cloudinary: {
             limit_gb: 25.0,
             used_bytes: cldBytes,
@@ -730,7 +461,6 @@ export default async function handler(req, res) {
     if (pathname === '/cron/cleanup' || pathname.startsWith('/cron/cleanup')) {
       const nowIso = new Date().toISOString();
       let cleanedCount = 0;
-      let cleanedPhotosCount = 0;
       let cleanedSlugs = [];
 
       if (hasSupabase) {
@@ -741,14 +471,6 @@ export default async function handler(req, res) {
 
           if (Array.isArray(expData) && expData.length > 0) {
             for (const alb of expData) {
-              // 1. Fetch all photos in expired album & delete actual files from Cloudinary/ImageKit/Supabase Storage
-              const pResp = await supabaseFetch(`photos?album_slug=eq.${alb.slug}&select=*`, {}, config);
-              const pList = await pResp.json();
-              if (Array.isArray(pList) && pList.length > 0) {
-                await Promise.allSettled(pList.map(photo => purgePhotoFromCloudStorage(photo, config)));
-                cleanedPhotosCount += pList.length;
-              }
-              // 2. Delete DB rows
               await supabaseFetch(`photos?album_slug=eq.${alb.slug}`, { method: 'DELETE' }, config);
               await supabaseFetch(`albums?slug=eq.${alb.slug}`, { method: 'DELETE' }, config);
               cleanedCount++;
@@ -770,9 +492,8 @@ export default async function handler(req, res) {
         cron_job: 'STORAGE_AUTO_RECYCLE',
         timestamp: new Date().toISOString(),
         cleaned_albums_count: cleanedCount,
-        cleaned_photos_count: cleanedPhotosCount,
         cleaned_slugs: cleanedSlugs,
-        message: `${cleanedCount} expired album(s) and ${cleanedPhotosCount} cloud photo(s) permanently purged and storage recycled.`
+        message: `${cleanedCount} expired album(s) successfully cleaned and storage recycled.`
       });
     }
 
