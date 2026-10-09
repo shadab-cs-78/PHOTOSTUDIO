@@ -211,10 +211,18 @@
         }
       });
 
-      // Background live poll every 2.5 seconds
+      // Smart Visibility-Aware Background Poll (12s interval when active, pause when hidden, immediate sync on tab focus)
       setInterval(() => {
-        syncPhotosSilently(false);
-      }, 2500);
+        if (!document.hidden) {
+          syncPhotosSilently(false);
+        }
+      }, 12000);
+
+      document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) {
+          syncPhotosSilently(false);
+        }
+      });
 
       // Check saved unlock state or URL PIN parameter
       const urlPin = urlParams.get('pin');
